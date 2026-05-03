@@ -1,0 +1,788 @@
+// VOID Platform - Complete Database Schema
+// PostgreSQL via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ReputationLevel {
+  NEWCOMER
+  BUILDER
+  HACKER
+  ARCHITECT
+  LEGEND
+}
+
+enum PostType {
+  THREAD
+  SNIPPET
+  DROP
+  BOUNTY
+  QUESTION
+}
+
+enum ListingType {
+  FOR_SALE
+  FOR_RENT
+  FOR_BORROW
+  OPEN_TO_TRADE
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  RENTED
+  EXPIRED
+  CANCELLED
+  DISPUTED
+}
+
+enum TransactionStatus {
+  PENDING
+  IN_ESCROW
+  COMPLETED
+  REFUNDED
+  DISPUTED
+  CANCELLED
+}
+
+enum BountyStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  FOLLOW
+  REACTION
+  COMMENT
+  MENTION
+  BOUNTY_SUBMISSION
+  TRANSACTION_UPDATE
+  GUILD_INVITE
+  HACKATHON_INVITE
+  ANSWER_ACCEPTED
+  REPUTATION_MILESTONE
+  SYSTEM
+}
+
+enum GuildVisibility {
+  PUBLIC
+  PRIVATE
+  INVITE_ONLY
+}
+
+// ─── USERS & AUTH ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  username      String    @unique
+  name          String?
+  image         String?
+  bannerImage   String?
+  bio           String?   @db.Text
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Social links
+  githubUrl   String?
+  websiteUrl  String?
+  twitterUrl  String?
+
+  // Availability toggles
+  openToHire        Boolean @default(false)
+  openToCollaborate Boolean @default(false)
+  openToMentor      Boolean @default(false)
+  openToTrade       Boolean @default(false)
+
+  // Tech stack tags (stored as array)
+  techStack String[]
+
+  // Relations
+  accounts          Account[]
+  sessions          Session[]
+  posts             Post[]
+  comments          Comment[]
+  reactions         PostReaction[]
+  listings          Listing[]
+  buyerTransactions Transaction[]       @relation("BuyerTransactions")
+  sellerTransactions Transaction[]      @relation("SellerTransactions")
+  reviewsGiven      Review[]            @relation("ReviewsGiven")
+  reviewsReceived   Review[]            @relation("ReviewsReceived")
+  questions         Question[]
+  answers           Answer[]
+  answerVotes       AnswerVote[]
+  following         Follow[]            @relation("Following")
+  followers         Follow[]            @relation("Followers")
+  notifications     Notification[]
+  sentMessages      DirectMessage[]     @relation("SentMessages")
+  receivedMessages  DirectMessage[]     @relation("ReceivedMessages")
+  reputation        Reputation?
+  reputationEvents  ReputationEvent[]
+  guildMemberships  GuildMember[]
+  hackathonMemberships HackathonMember[]
+  bounties          Bounty[]
+  bountySubmissions BountySubmission[]
+  mentorSlots       MentorSlot[]
+  cofounderListings CofounderListing[]
+  openSlots         OpenSlot[]
+  wikiEdits         WikiEdit[]
+  savedListings     SavedListing[]
+  offers            Offer[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── DARK MODE SESSIONS ───────────────────────────────────────────────────────
+
+model DarkModeSession {
+  id          String   @id @default(cuid())
+  // Hashed link to real user — never stored in plaintext
+  userHash    String   // SHA-256 of userId + secret salt
+  handle      String   @unique // e.g. ghost_0x7f
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+
+  // Dark mode posts are linked here, NOT to real user
+  posts       Post[]   @relation("DarkSessionPosts")
+
+  @@index([userHash])
+  @@index([handle])
+}
+
+// ─── POSTS & SOCIAL ───────────────────────────────────────────────────────────
+
+model Post {
+  id          String   @id @default(cuid())
+  type        PostType
+  title       String?
+  content     String   @db.Text
+  codeSnippet String?  @db.Text
+  language    String?  // programming language for snippets
+  images      String[] // R2 URLs
+  links       String[]
+  isDarkMode  Boolean  @default(false)
+  darkHandle  String?  // anonymous handle if dark mode
+  isScheduled Boolean  @default(false)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Author — null if dark mode
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Dark mode session link
+  darkSessionId String?
+  darkSession   DarkModeSession? @relation("DarkSessionPosts", fields: [darkSessionId], references: [id])
+
+  // Relations
+  tags      PostTag[]
+  reactions PostReaction[]
+  comments  Comment[]
+
+  @@index([authorId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([isDarkMode])
+}
+
+model PostReaction {
+  id        String   @id @default(cuid())
+  type      String   // "used_this" | "saved_me_hours" | "brilliant"
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, type])
+  @@index([postId])
+  @@index([userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  postId    String
+  userId    String
+  parentId  String?  // for nested comments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique
+  slug  String    @unique
+  color String?
+
+  posts     PostTag[]
+  questions QuestionTag[]
+  listings  ListingTag[]
+
+  @@index([slug])
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ─── MARKETPLACE ──────────────────────────────────────────────────────────────
+
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @db.Text
+  category    String
+  type        ListingType
+  status      ListingStatus @default(ACTIVE)
+  price       Float?        // null for borrow/trade
+  currency    String        @default("USD")
+  // Rental pricing
+  hourlyRate  Float?
+  dailyRate   Float?
+  weeklyRate  Float?
+  monthlyRate Float?
+  // Metadata
+  techStack   String[]
+  tags        ListingTag[]
+  images      ListingImage[]
+  // Seller
+  sellerId    String
+  seller      User          @relation(fields: [sellerId], references: [id])
+  // Rental tracking
+  rentalStart DateTime?
+  rentalEnd   DateTime?
+  // Uptime SLA
+  uptimeSLA   Float?        // percentage e.g. 99.9
+  // Stats
+  views       Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  expiresAt   DateTime?
+
+  transactions Transaction[]
+  savedBy      SavedListing[]
+  offers       Offer[]
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([category])
+  @@index([type])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  order     Int     @default(0)
+  listingId String
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model ListingTag {
+  listingId String
+  tagId     String
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, tagId])
+}
+
+model SavedListing {
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+}
+
+model Offer {
+  id        String   @id @default(cuid())
+  amount    Float
+  message   String?  @db.Text
+  status    String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | COUNTERED
+  listingId String
+  buyerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer   User    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+// ─── TRANSACTIONS & ESCROW ────────────────────────────────────────────────────
+
+model Transaction {
+  id              String            @id @default(cuid())
+  status          TransactionStatus @default(PENDING)
+  amount          Float
+  platformFee     Float             // 7% of amount
+  sellerPayout    Float
+  currency        String            @default("USD")
+  stripePaymentId String?
+  stripeTransferId String?
+  listingId       String
+  buyerId         String
+  sellerId        String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  completedAt     DateTime?
+  // Dead man's switch
+  sellerLastSeen  DateTime?
+  autoRefundAt    DateTime?         // 7 days after creation if seller disappears
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  buyer   User    @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  seller  User    @relation("SellerTransactions", fields: [sellerId], references: [id])
+  escrow  Escrow?
+  review  Review?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model Escrow {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  amount        Float
+  heldAt        DateTime @default(now())
+  releasedAt    DateTime?
+  refundedAt    DateTime?
+  stripeEscrowId String?
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  rating        Int      // 1-5
+  comment       String?  @db.Text
+  transactionId String   @unique
+  reviewerId    String
+  revieweeId    String
+  createdAt     DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  reviewer    User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee    User        @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@index([revieweeId])
+}
+
+// ─── KNOWLEDGE LAYER ──────────────────────────────────────────────────────────
+
+model Question {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  isDarkMode  Boolean  @default(false)
+  darkHandle  String?
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  tags    QuestionTag[]
+  answers Answer[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model QuestionTag {
+  questionId String
+  tagId      String
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
+}
+
+model Answer {
+  id           String   @id @default(cuid())
+  content      String   @db.Text
+  isAccepted   Boolean  @default(false)
+  stillWorksAt DateTime? // "Still works in 2025" timestamp
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questionId String
+  authorId   String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id])
+
+  votes    AnswerVote[]
+  versions AnswerVersion[]
+
+  @@index([questionId])
+  @@index([authorId])
+}
+
+model AnswerVote {
+  id       String  @id @default(cuid())
+  value    Int     // 1 or -1
+  answerId String
+  userId   String
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([answerId, userId])
+  @@index([answerId])
+}
+
+model AnswerVersion {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  answerId  String
+  editedBy  String
+  createdAt DateTime @default(now())
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@index([answerId])
+}
+
+model Wiki {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  edits WikiEdit[]
+
+  @@index([slug])
+}
+
+model WikiEdit {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  wikiId    String
+  editorId  String
+  createdAt DateTime @default(now())
+
+  wiki   Wiki @relation(fields: [wikiId], references: [id], onDelete: Cascade)
+  editor User @relation(fields: [editorId], references: [id])
+
+  @@index([wikiId])
+}
+
+// ─── BOUNTIES ─────────────────────────────────────────────────────────────────
+
+model Bounty {
+  id          String       @id @default(cuid())
+  title       String
+  description String       @db.Text
+  reward      Float
+  currency    String       @default("USD")
+  status      BountyStatus @default(OPEN)
+  tags        String[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  expiresAt   DateTime?
+
+  authorId    String
+  author      User   @relation(fields: [authorId], references: [id])
+
+  submissions BountySubmission[]
+
+  @@index([authorId])
+  @@index([status])
+}
+
+model BountySubmission {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  links       String[]
+  isAccepted  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  bountyId    String
+  submitterId String
+  bounty      Bounty @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  submitter   User   @relation(fields: [submitterId], references: [id])
+
+  @@index([bountyId])
+  @@index([submitterId])
+}
+
+// ─── GUILDS ───────────────────────────────────────────────────────────────────
+
+model Guild {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String?         @db.Text
+  avatar      String?
+  banner      String?
+  visibility  GuildVisibility @default(PUBLIC)
+  techStack   String[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  members GuildMember[]
+
+  @@index([slug])
+}
+
+model GuildMember {
+  guildId   String
+  userId    String
+  role      String   @default("MEMBER") // ADMIN | MODERATOR | MEMBER
+  joinedAt  DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, userId])
+  @@index([userId])
+}
+
+// ─── HACKATHON ROOMS ──────────────────────────────────────────────────────────
+
+model HackathonRoom {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  startAt     DateTime
+  endAt       DateTime
+  isActive    Boolean  @default(true)
+  repoUrl     String?
+  shipUrl     String?
+  createdAt   DateTime @default(now())
+
+  members HackathonMember[]
+
+  @@index([isActive])
+}
+
+model HackathonMember {
+  roomId   String
+  userId   String
+  role     String   @default("MEMBER") // LEAD | MEMBER
+  joinedAt DateTime @default(now())
+
+  room HackathonRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@index([userId])
+}
+
+// ─── COLLABORATION ────────────────────────────────────────────────────────────
+
+model MentorSlot {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  hoursPerWeek Int
+  techStack   String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  mentorId String
+  mentor   User   @relation(fields: [mentorId], references: [id])
+
+  @@index([mentorId])
+}
+
+model CofounderListing {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  lookingFor  String   // "technical" | "non-technical" | "both"
+  stage       String   // "idea" | "mvp" | "growth"
+  techStack   String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model OpenSlot {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?  @db.Text
+  hoursAvailable Int
+  skills       String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─── DIRECT MESSAGES ──────────────────────────────────────────────────────────
+
+model DirectMessage {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  isEncrypted Boolean  @default(true)
+  // Encrypted payload (Signal protocol)
+  ciphertext  String?  @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  senderId   String
+  receiverId String
+  sender     User   @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+// ─── REPUTATION ───────────────────────────────────────────────────────────────
+
+model Reputation {
+  id     String          @id @default(cuid())
+  score  Int             @default(0)
+  level  ReputationLevel @default(NEWCOMER)
+  userId String          @unique
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReputationEvent {
+  id          String   @id @default(cuid())
+  type        String   // "post_reaction" | "answer_accepted" | "bounty_completed" | "sale_completed" etc.
+  points      Int
+  description String
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
