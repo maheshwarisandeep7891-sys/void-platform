@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable ESLint during build (we run it separately)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Disable TypeScript errors during build for faster deploys
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
   // Image optimization
   images: {
     remotePatterns: [
@@ -11,11 +20,8 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // External packages for server components (Next.js 16+)
+  // External packages for server components
   serverExternalPackages: ["@prisma/client", "prisma"],
-
-  // Turbopack config (Next.js 16 default)
-  turbopack: {},
 
   // Headers for security
   async headers() {
@@ -26,10 +32,6 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
-          },
         ],
       },
     ];
