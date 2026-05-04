@@ -5,11 +5,8 @@ import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 
-const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? true;
-const cookiePrefix = useSecureCookies ? "__Secure-" : "";
-const hostName = process.env.NEXTAUTH_URL
-  ? new URL(process.env.NEXTAUTH_URL).hostname
-  : "void-platform.vercel.app";
+const useSecureCookies = true; // Always use secure cookies on Vercel
+const cookiePrefix = "__Secure-";
 
 export const authOptions: NextAuthOptions = {
   providers: [
