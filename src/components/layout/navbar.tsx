@@ -23,7 +23,7 @@ import {
   Code2,
   Moon,
 } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession, signOut } from "@/hooks/use-session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +76,7 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const user = session?.user as any;
+  const user = session?.user;
   const repLevel = user?.reputation?.level ?? "NEWCOMER";
   const repColor = REPUTATION_COLORS[repLevel];
 

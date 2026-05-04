@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { awardReputation } from "@/lib/reputation";
@@ -16,7 +15,7 @@ export async function GET(req: NextRequest) {
     const tech = searchParams.get("tech") ?? "All";
     const type = searchParams.get("type");
 
-    const session = await getServerSession(authOptions);
+    const session = await getSession(req);
     const skip = (page - 1) * PAGE_SIZE;
 
     const where: any = {
@@ -104,7 +103,7 @@ const createPostSchema = z.object({
 // POST /api/posts — create post
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession(req);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

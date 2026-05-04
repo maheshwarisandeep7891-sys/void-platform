@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCache, setCache } from "@/lib/redis";
 
@@ -51,7 +50,7 @@ export async function GET(
     }
 
     // Check if current user follows this user
-    const session = await getServerSession(authOptions);
+    const session = await getSession(req);
     let isFollowing = false;
     if (session?.user?.id && session.user.id !== user.id) {
       const follow = await prisma.follow.findUnique({

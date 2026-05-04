@@ -1,5 +1,9 @@
-import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth";
+// NextAuth removed — using custom auth at /api/auth/signin and /api/auth/callback
+import { NextResponse } from "next/server";
 
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+export async function GET() {
+  return NextResponse.json({ error: "Use /api/auth/signin" }, { status: 404 });
+}
+export async function POST() {
+  return NextResponse.json({ error: "Use /api/auth/signin" }, { status: 404 });
+}

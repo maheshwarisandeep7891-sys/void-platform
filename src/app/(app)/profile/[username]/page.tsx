@@ -22,7 +22,7 @@ import {
   UserMinus,
   MessageSquare,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,7 +74,7 @@ export default function ProfilePage() {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  const isOwnProfile = (session?.user as any)?.username === username;
+  const isOwnProfile = session?.user?.username === username;
 
   useEffect(() => {
     const fetchProfile = async () => {
