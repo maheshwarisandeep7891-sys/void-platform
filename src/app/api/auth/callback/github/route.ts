@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get("error");
   const base = getBaseUrl();
 
-  // Handle GitHub errors (e.g. user denied access)
   if (error) {
     return NextResponse.redirect(
       `${base}/auth/error?error=${encodeURIComponent(error)}`
@@ -38,7 +37,6 @@ export async function GET(req: NextRequest) {
   const callbackUrl = req.cookies.get("void_oauth_callback")?.value ?? "/feed";
 
   if (!storedState || storedState !== state) {
-    console.error("State mismatch:", { storedState: storedState?.slice(0, 8), state: state?.slice(0, 8) });
     return NextResponse.redirect(`${base}/auth/error?error=invalid_state`);
   }
 
@@ -67,9 +65,13 @@ export async function GET(req: NextRequest) {
 
     const tokenData = await tokenRes.json();
 
+    // Surface the exact GitHub error
     if (tokenData.error || !tokenData.access_token) {
+      const ghError = tokenData.error_description ?? tokenData.error ?? "unknown";
       console.error("GitHub token error:", tokenData);
-      return NextResponse.redirect(`${base}/auth/error?error=OAuthCallback`);
+      return NextResponse.redirect(
+        `${base}/auth/error?error=${encodeURIComponent(ghError)}`
+      );
     }
 
     const accessToken = tokenData.access_token;
@@ -104,7 +106,6 @@ export async function GET(req: NextRequest) {
       );
       email = primary?.email ?? null;
     }
-    // Fallback to any verified email
     if (!email && Array.isArray(githubEmails)) {
       const verified = githubEmails.find(
         (e: { verified: boolean; email: string }) => e.verified
@@ -130,7 +131,6 @@ export async function GET(req: NextRequest) {
     });
 
     if (!dbUser) {
-      // Generate unique username from GitHub login
       const baseUsername = (githubUser.login || email.split("@")[0])
         .toLowerCase()
         .replace(/[^a-z0-9_]/g, "")
@@ -161,7 +161,6 @@ export async function GET(req: NextRequest) {
         },
       });
     } else {
-      // Update profile image/name
       await prisma.user.update({
         where: { id: dbUser.id },
         data: {
@@ -182,21 +181,20 @@ export async function GET(req: NextRequest) {
       reputation: dbUser.reputation,
     });
 
-    // Redirect to callbackUrl with session cookie set
     const redirectUrl = callbackUrl.startsWith("http")
       ? callbackUrl
       : `${base}${callbackUrl}`;
 
     const response = NextResponse.redirect(redirectUrl);
     setSessionCookie(response, token);
-
-    // Clear OAuth state cookies
     response.cookies.delete("void_oauth_state");
     response.cookies.delete("void_oauth_callback");
 
     return response;
-  } catch (err) {
+  } catch (err: any) {
     console.error("OAuth callback error:", err);
-    return NextResponse.redirect(`${base}/auth/error?error=OAuthCallback`);
+    return NextResponse.redirect(
+      `${base}/auth/error?error=${encodeURIComponent(err?.message ?? "callback_error")}`
+    );
   }
 }
