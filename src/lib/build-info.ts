@@ -1,2 +1,3 @@
-// Build timestamp: 20260504195423
-export const BUILD_TIME = '20260504195423';
+// Build: 20260504203439
+export const BUILD_TIME = '20260504203439';
+export const AUTH_CALLBACK = '/api/auth/callback/github';
