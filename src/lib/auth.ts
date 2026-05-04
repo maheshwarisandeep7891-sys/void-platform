@@ -1,57 +1,57 @@
-import NextAuth from "next-auth";
-import GitHub from "next-auth/providers/github";
-import Google from "next-auth/providers/google";
-
 /**
- * NextAuth v5 beta configuration
- * Using JWT strategy (no database sessions) to avoid PrismaAdapter issues
- * User data is stored in the JWT token
+ * NextAuth v4 configuration — stable, production-ready
  */
-export const { handlers, auth, signIn, signOut } = NextAuth({
+import { NextAuthOptions } from "next-auth";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+
+export const authOptions: NextAuthOptions = {
   providers: [
-    GitHub({
+    GitHubProvider({
       clientId: process.env.AUTH_GITHUB_ID ?? process.env.GITHUB_CLIENT_ID ?? "",
       clientSecret: process.env.AUTH_GITHUB_SECRET ?? process.env.GITHUB_CLIENT_SECRET ?? "",
     }),
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
-          Google({
+          GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
           }),
         ]
       : []),
   ],
-  // Use JWT strategy — no database needed for sessions
-  // This avoids the PrismaAdapter Configuration error
   session: {
     strategy: "jwt",
   },
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "void-fallback-secret",
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "void-fallback-secret-change-me",
   callbacks: {
     async jwt({ token, user, account, profile }) {
       if (user) {
         token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.image = user.image;
       }
       // On first sign in, create/update user in DB
       if (account && user?.email) {
         try {
           const { prisma } = await import("@/lib/prisma");
+
           let dbUser = await prisma.user.findUnique({
             where: { email: user.email },
-            select: { id: true, username: true, role: true, reputation: { select: { score: true, level: true } } },
+            select: {
+              id: true,
+              username: true,
+              role: true,
+              reputation: { select: { score: true, level: true } },
+            },
           });
 
           if (!dbUser) {
-            // Create new user
             const baseUsername = (
               (profile as any)?.login ||
               user.name?.toLowerCase().replace(/\s+/g, "_") ||
               user.email.split("@")[0]
-            ).replace(/[^a-z0-9_]/g, "").slice(0, 20) || "user";
+            )
+              .replace(/[^a-z0-9_]/g, "")
+              .slice(0, 20) || "user";
 
             let username = baseUsername;
             let counter = 1;
@@ -67,16 +67,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 username,
                 reputation: { create: { score: 0, level: "NEWCOMER" } },
               },
-              select: { id: true, username: true, role: true, reputation: { select: { score: true, level: true } } },
+              select: {
+                id: true,
+                username: true,
+                role: true,
+                reputation: { select: { score: true, level: true } },
+              },
             });
           } else {
-            // Update image if changed
-            if (user.image && user.image !== dbUser.id) {
-              await prisma.user.update({
-                where: { id: dbUser.id },
-                data: { image: user.image, name: user.name ?? undefined },
-              });
-            }
+            // Update profile image
+            await prisma.user.update({
+              where: { id: dbUser.id },
+              data: {
+                image: user.image ?? undefined,
+                name: user.name ?? undefined,
+              },
+            });
           }
 
           token.id = dbUser.id;
@@ -103,4 +109,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-});
+};

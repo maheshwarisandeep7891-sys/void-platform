@@ -101,7 +101,7 @@ export default function QuestionPage() {
         ...q,
         answers: q.answers.map((a) =>
           a.id === answerId
-            ? { ...a, votes: [...a.votes.filter((v) => v.userId !== session.user?.id), { value, userId: session.user?.id ?? "" }] }
+            ? { ...a, votes: [...a.votes.filter((v) => v.userId !== (session.user as any)?.id), { value, userId: (session.user as any)?.id ?? "" }] }
             : a
         ),
       } : q);
@@ -109,7 +109,7 @@ export default function QuestionPage() {
   };
 
   const acceptAnswer = async (answerId: string) => {
-    if (!session || session.user?.id !== question?.author.id) return;
+    if (!session || (session.user as any)?.id !== question?.author.id) return;
     try {
       await fetch(`/api/knowledge/answers/${answerId}/accept`, { method: "POST" });
       setQuestion((q) => q ? {
