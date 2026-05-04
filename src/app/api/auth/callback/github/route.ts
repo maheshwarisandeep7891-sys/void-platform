@@ -1,19 +1,18 @@
 /**
- * Step 2: GitHub OAuth callback
- * GET /api/auth/callback/github?code=...&state=...
+ * GitHub OAuth callback - handles the redirect from GitHub after authorization
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   createSessionToken,
   setSessionCookie,
-  GITHUB_TOKEN_URL,
-  GITHUB_USER_URL,
-  GITHUB_EMAILS_URL,
   getGitHubClientId,
   getGitHubClientSecret,
   getBaseUrl,
 } from "@/lib/auth";
+
+// Track used codes to prevent double-use (in-memory, resets on cold start)
+const usedCodes = new Set<string>();
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -32,6 +31,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${base}/auth/error?error=missing_params`);
   }
 
+  // Prevent double-use of codes
+  if (usedCodes.has(code)) {
+    return NextResponse.redirect(`${base}/auth/error?error=code_already_used`);
+  }
+
   // Verify CSRF state
   const storedState = req.cookies.get("void_oauth_state")?.value;
   const callbackUrl = req.cookies.get("void_oauth_callback")?.value ?? "/feed";
@@ -47,28 +51,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${base}/auth/error?error=Configuration`);
   }
 
+  // Mark code as used immediately
+  usedCodes.add(code);
+  // Clean up after 10 minutes
+  setTimeout(() => usedCodes.delete(code), 600000);
+
   try {
     // Exchange code for access token
-    const tokenRes = await fetch(GITHUB_TOKEN_URL, {
+    // IMPORTANT: redirect_uri must exactly match what was sent in the authorization request
+    const callbackUri = `${base}/api/auth/callback/github`;
+    
+    const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": "VOID-Platform/1.0",
       },
       body: JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,
         code,
-        redirect_uri: `${base}/api/auth/callback/github`,
+        redirect_uri: callbackUri,
       }),
     });
 
     const tokenData = await tokenRes.json();
 
-    // Surface the exact GitHub error
     if (tokenData.error || !tokenData.access_token) {
-      const ghError = tokenData.error_description ?? tokenData.error ?? "unknown";
-      console.error("GitHub token error:", tokenData);
+      const ghError = tokenData.error_description ?? tokenData.error ?? "token_exchange_failed";
+      console.error("GitHub token error:", JSON.stringify(tokenData));
       return NextResponse.redirect(
         `${base}/auth/error?error=${encodeURIComponent(ghError)}`
       );
@@ -76,65 +88,59 @@ export async function GET(req: NextRequest) {
 
     const accessToken = tokenData.access_token;
 
-    // Fetch GitHub user profile and emails in parallel
-    const [userRes, emailsRes] = await Promise.all([
-      fetch(GITHUB_USER_URL, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": "VOID-Platform/1.0",
-        },
-      }),
-      fetch(GITHUB_EMAILS_URL, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": "VOID-Platform/1.0",
-        },
-      }),
-    ]);
+    // Fetch user profile
+    const userRes = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "VOID-Platform/1.0",
+      },
+    });
+
+    if (!userRes.ok) {
+      return NextResponse.redirect(`${base}/auth/error?error=user_fetch_failed`);
+    }
 
     const githubUser = await userRes.json();
-    const githubEmails = await emailsRes.json();
 
-    // Get primary verified email
+    // Get email
     let email: string | null = githubUser.email;
-    if (!email && Array.isArray(githubEmails)) {
-      const primary = githubEmails.find(
-        (e: { primary: boolean; verified: boolean; email: string }) =>
-          e.primary && e.verified
-      );
-      email = primary?.email ?? null;
-    }
-    if (!email && Array.isArray(githubEmails)) {
-      const verified = githubEmails.find(
-        (e: { verified: boolean; email: string }) => e.verified
-      );
-      email = verified?.email ?? null;
+    
+    if (!email) {
+      const emailsRes = await fetch("https://api.github.com/user/emails", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "VOID-Platform/1.0",
+        },
+      });
+      
+      if (emailsRes.ok) {
+        const emails = await emailsRes.json();
+        if (Array.isArray(emails)) {
+          const primary = emails.find((e: any) => e.primary && e.verified);
+          const anyVerified = emails.find((e: any) => e.verified);
+          email = primary?.email ?? anyVerified?.email ?? emails[0]?.email ?? null;
+        }
+      }
     }
 
     if (!email) {
       return NextResponse.redirect(`${base}/auth/error?error=no_email`);
     }
 
-    // Find or create user in database
+    // Find or create user
     let dbUser = await prisma.user.findUnique({
       where: { email },
       select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        role: true,
+        id: true, username: true, name: true, image: true, role: true,
         reputation: { select: { score: true, level: true } },
       },
     });
 
     if (!dbUser) {
       const baseUsername = (githubUser.login || email.split("@")[0])
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, "")
-        .slice(0, 20) || "user";
+        .toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20) || "user";
 
       let username = baseUsername;
       let counter = 1;
@@ -152,11 +158,7 @@ export async function GET(req: NextRequest) {
           reputation: { create: { score: 0, level: "NEWCOMER" } },
         },
         select: {
-          id: true,
-          username: true,
-          name: true,
-          image: true,
-          role: true,
+          id: true, username: true, name: true, image: true, role: true,
           reputation: { select: { score: true, level: true } },
         },
       });
@@ -170,7 +172,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Create JWT session token
+    // Create session JWT
     const token = await createSessionToken({
       id: dbUser.id,
       email,
@@ -192,9 +194,9 @@ export async function GET(req: NextRequest) {
 
     return response;
   } catch (err: any) {
-    console.error("OAuth callback error:", err);
+    console.error("OAuth callback error:", err?.message);
     return NextResponse.redirect(
-      `${base}/auth/error?error=${encodeURIComponent(err?.message ?? "callback_error")}`
+      `${base}/auth/error?error=${encodeURIComponent(err?.message ?? "server_error")}`
     );
   }
 }
