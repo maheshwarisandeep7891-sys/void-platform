@@ -4,52 +4,29 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
-// Build provider list dynamically based on available env vars
-function buildProviders() {
-  const providers = [];
-
-  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-    providers.push(
-      GitHub({
-        clientId: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      })
-    );
-  }
-
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    providers.push(
-      Google({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      })
-    );
-  }
-
-  // Magic link via Resend (only if API key is set)
-  if (process.env.RESEND_API_KEY) {
-    // Dynamic import to avoid build-time issues
-    const Resend = require("next-auth/providers/resend").default;
-    providers.push(
-      Resend({
-        apiKey: process.env.RESEND_API_KEY,
-        from: process.env.EMAIL_FROM ?? "noreply@void.dev",
-      })
-    );
-  }
-
-  return providers;
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  providers: buildProviders(),
+  providers: [
+    GitHub({
+      clientId: process.env.AUTH_GITHUB_ID ?? process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.AUTH_GITHUB_SECRET ?? process.env.GITHUB_CLIENT_SECRET ?? "",
+    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
+  ],
   session: {
     strategy: "database",
   },
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, user }) {
-      if (session.user) {
+      if (session.user && user) {
         session.user.id = user.id;
         try {
           const dbUser = await prisma.user.findUnique({
@@ -65,8 +42,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             (session.user as any).role = dbUser.role;
             (session.user as any).reputation = dbUser.reputation;
           }
-        } catch {
-          // DB not available during build
+        } catch (err) {
+          console.error("Session callback DB error:", err);
         }
       }
       return session;
@@ -80,15 +57,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!existingUser) {
+          // Generate username from GitHub login or email
           const baseUsername = (
             (profile as any)?.login ||
             user.name?.toLowerCase().replace(/\s+/g, "_") ||
             user.email.split("@")[0]
           )
             .replace(/[^a-z0-9_]/g, "")
-            .slice(0, 20);
+            .slice(0, 20) || "user";
 
-          let username = baseUsername || "user";
+          let username = baseUsername;
           let counter = 1;
           while (await prisma.user.findUnique({ where: { username } })) {
             username = `${baseUsername}${counter++}`;
@@ -106,18 +84,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           });
         }
+        return true;
       } catch (err) {
         console.error("signIn callback error:", err);
         return false;
       }
-
-      return true;
     },
   },
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
-    verifyRequest: "/auth/verify",
   },
-  secret: process.env.NEXTAUTH_SECRET ?? "void-dev-secret-change-in-production",
 });
