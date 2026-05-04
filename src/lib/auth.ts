@@ -1,12 +1,10 @@
 /**
  * NextAuth v4 configuration — stable, production-ready
+ * Using minimal config to avoid cookie/CSRF issues
  */
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-
-const useSecureCookies = true; // Always use secure cookies on Vercel
-const cookiePrefix = "__Secure-";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,71 +25,14 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "void-fallback-secret-change-me",
-  // Explicit cookie config to fix OAuth state verification on Vercel
-  cookies: {
-    sessionToken: {
-      name: `${cookiePrefix}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-    callbackUrl: {
-      name: `${cookiePrefix}next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-    csrfToken: {
-      name: `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-    pkceCodeVerifier: {
-      name: `${cookiePrefix}next-auth.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-        maxAge: 900,
-      },
-    },
-    state: {
-      name: `${cookiePrefix}next-auth.state`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-        maxAge: 900,
-      },
-    },
-    nonce: {
-      name: `${cookiePrefix}next-auth.nonce`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-  },
+  // NO custom cookie config — let NextAuth handle cookies automatically
+  // Custom cookie config was causing CSRF token mismatch
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user, account, profile }: any) {
       if (user) {
         token.id = user.id;
       }
-      // On first sign in, create/update user in DB
       if (account && user?.email) {
         try {
           const { prisma } = await import("@/lib/prisma");
@@ -137,7 +78,6 @@ export const authOptions: NextAuthOptions = {
               },
             });
           } else {
-            // Update profile image
             await prisma.user.update({
               where: { id: dbUser.id },
               data: {
@@ -157,12 +97,12 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        (session.user as any).username = token.username;
-        (session.user as any).role = token.role;
-        (session.user as any).reputation = token.reputation;
+        session.user.username = token.username;
+        session.user.role = token.role;
+        session.user.reputation = token.reputation;
       }
       return session;
     },
