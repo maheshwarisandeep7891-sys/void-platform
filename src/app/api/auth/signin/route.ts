@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   // Build GitHub OAuth URL
   const githubUrl = new URL(GITHUB_AUTH_URL);
   githubUrl.searchParams.set("client_id", clientId);
-  githubUrl.searchParams.set("redirect_uri", `${getBaseUrl()}/api/auth/callback`);
+  githubUrl.searchParams.set("redirect_uri", `${getBaseUrl()}/api/auth/callback/github`);
   githubUrl.searchParams.set("scope", "read:user user:email");
   githubUrl.searchParams.set("state", state);
 
