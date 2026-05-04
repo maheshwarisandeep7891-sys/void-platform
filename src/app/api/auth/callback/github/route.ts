@@ -1,6 +1,6 @@
 /**
  * Step 2: GitHub OAuth callback
- * GET /api/auth/callback?code=...&state=...
+ * GET /api/auth/callback/github?code=...&state=...
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -22,8 +22,11 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get("error");
   const base = getBaseUrl();
 
+  // Handle GitHub errors (e.g. user denied access)
   if (error) {
-    return NextResponse.redirect(`${base}/auth/error?error=${encodeURIComponent(error)}`);
+    return NextResponse.redirect(
+      `${base}/auth/error?error=${encodeURIComponent(error)}`
+    );
   }
 
   if (!code || !state) {
@@ -35,6 +38,7 @@ export async function GET(req: NextRequest) {
   const callbackUrl = req.cookies.get("void_oauth_callback")?.value ?? "/feed";
 
   if (!storedState || storedState !== state) {
+    console.error("State mismatch:", { storedState: storedState?.slice(0, 8), state: state?.slice(0, 8) });
     return NextResponse.redirect(`${base}/auth/error?error=invalid_state`);
   }
 
@@ -70,7 +74,7 @@ export async function GET(req: NextRequest) {
 
     const accessToken = tokenData.access_token;
 
-    // Fetch GitHub user profile
+    // Fetch GitHub user profile and emails in parallel
     const [userRes, emailsRes] = await Promise.all([
       fetch(GITHUB_USER_URL, {
         headers: {
@@ -99,6 +103,13 @@ export async function GET(req: NextRequest) {
           e.primary && e.verified
       );
       email = primary?.email ?? null;
+    }
+    // Fallback to any verified email
+    if (!email && Array.isArray(githubEmails)) {
+      const verified = githubEmails.find(
+        (e: { verified: boolean; email: string }) => e.verified
+      );
+      email = verified?.email ?? null;
     }
 
     if (!email) {
@@ -160,7 +171,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Create session JWT
+    // Create JWT session token
     const token = await createSessionToken({
       id: dbUser.id,
       email,
@@ -171,10 +182,10 @@ export async function GET(req: NextRequest) {
       reputation: dbUser.reputation,
     });
 
-    // Redirect to callbackUrl with session cookie
-    const redirectUrl = callbackUrl.startsWith("/")
-      ? `${base}${callbackUrl}`
-      : callbackUrl;
+    // Redirect to callbackUrl with session cookie set
+    const redirectUrl = callbackUrl.startsWith("http")
+      ? callbackUrl
+      : `${base}${callbackUrl}`;
 
     const response = NextResponse.redirect(redirectUrl);
     setSessionCookie(response, token);

@@ -1,21 +1,18 @@
 /**
  * Step 1: Redirect to GitHub OAuth
- * GET /api/auth/signin?provider=github&callbackUrl=/feed
+ * GET /api/auth/signin?callbackUrl=/feed
  */
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import {
-  GITHUB_AUTH_URL,
-  getGitHubClientId,
-  getBaseUrl,
-} from "@/lib/auth";
+import { GITHUB_AUTH_URL, getGitHubClientId, getBaseUrl } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") ?? "/feed";
   const clientId = getGitHubClientId();
+  const base = getBaseUrl();
 
   if (!clientId) {
-    return NextResponse.redirect(new URL("/auth/error?error=Configuration", getBaseUrl()));
+    return NextResponse.redirect(`${base}/auth/error?error=Configuration`);
   }
 
   // Generate CSRF state
@@ -24,20 +21,24 @@ export async function GET(req: NextRequest) {
   // Build GitHub OAuth URL
   const githubUrl = new URL(GITHUB_AUTH_URL);
   githubUrl.searchParams.set("client_id", clientId);
-  githubUrl.searchParams.set("redirect_uri", `${getBaseUrl()}/api/auth/callback/github`);
+  githubUrl.searchParams.set(
+    "redirect_uri",
+    `${base}/api/auth/callback/github`
+  );
   githubUrl.searchParams.set("scope", "read:user user:email");
   githubUrl.searchParams.set("state", state);
 
   const response = NextResponse.redirect(githubUrl.toString());
 
-  // Store state + callbackUrl in cookies
+  // Use sameSite=none so cookies survive the GitHub cross-site redirect
   const cookieOpts = {
     httpOnly: true,
     secure: true,
-    sameSite: "lax" as const,
+    sameSite: "none" as const,
     maxAge: 600,
     path: "/",
   };
+
   response.cookies.set("void_oauth_state", state, cookieOpts);
   response.cookies.set("void_oauth_callback", callbackUrl, cookieOpts);
 
