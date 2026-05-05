@@ -10,6 +10,7 @@ import {
   ChevronRight, Filter,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
+import { useLiveFeed } from "@/hooks/use-live-feed";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,24 @@ export default function FeedPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
 
+  // Live feed — only on "all" filter
+  const { newPosts, clearNewPosts, isConnected } = useLiveFeed(filter === "all");
+  const [showNewBanner, setShowNewBanner] = useState(false);
+
+  useEffect(() => {
+    if (newPosts.length > 0) setShowNewBanner(true);
+  }, [newPosts]);
+
+  const handleShowNew = () => {
+    setPosts(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const fresh = newPosts.filter(p => !existingIds.has(p.id)) as Post[];
+      return [...fresh, ...prev];
+    });
+    clearNewPosts();
+    setShowNewBanner(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const fetchPosts = useCallback(async (reset = false) => {
     try {
       const currentPage = reset ? 1 : page;
@@ -136,7 +155,15 @@ export default function FeedPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-black font-mono text-void-text tracking-tight">Feed</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black font-mono text-void-text tracking-tight">Feed</h1>
+            {isConnected && (
+              <span className="flex items-center gap-1 text-[10px] font-mono text-void-green">
+                <span className="w-1.5 h-1.5 bg-void-green rounded-full animate-pulse" />
+                live
+              </span>
+            )}
+          </div>
           <p className="text-xs font-mono text-void-muted mt-0.5">What builders are shipping</p>
         </div>
         <div className="flex items-center gap-2">
@@ -154,6 +181,22 @@ export default function FeedPage() {
           </Link>
         </div>
       </div>
+
+      {/* New posts banner */}
+      <AnimatePresence>
+        {showNewBanner && newPosts.length > 0 && (
+          <motion.button
+            initial={{ opacity: 0, y: -12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.97 }}
+            onClick={handleShowNew}
+            className="w-full mb-4 py-2.5 px-4 rounded-xl bg-void-purple/10 border border-void-purple/30 text-sm font-mono text-void-purple hover:bg-void-purple/15 transition-all flex items-center justify-center gap-2"
+          >
+            <span className="w-2 h-2 bg-void-purple rounded-full animate-pulse" />
+            {newPosts.length} new {newPosts.length === 1 ? "post" : "posts"} — click to load
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Feed type filters */}
       <div className="flex items-center gap-1 mb-4 p-1 bg-void-surface rounded-xl border border-void-border">

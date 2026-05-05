@@ -24,6 +24,7 @@ import {
   Moon,
 } from "lucide-react";
 import { useSession, signOut } from "@/hooks/use-session";
+import { useNotifications } from "@/hooks/use-notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,7 @@ export function Navbar() {
   const user = session?.user;
   const repLevel = user?.reputation?.level ?? "NEWCOMER";
   const repColor = REPUTATION_COLORS[repLevel];
+  const { unreadCount } = useNotifications();
 
   return (
     <>
@@ -169,7 +171,11 @@ export function Navbar() {
                     className="relative p-2 rounded-lg text-void-muted hover:text-void-text hover:bg-void-surface transition-all duration-150"
                   >
                     <Bell className="w-4 h-4" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-void-purple rounded-full" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-void-purple rounded-full flex items-center justify-center text-[9px] font-mono font-bold text-white px-1">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
 
                   {/* Messages */}

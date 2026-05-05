@@ -76,11 +76,12 @@ const FEATURES = [
   },
 ];
 
-const STATS = [
-  { label: "Builders", value: "10K+", icon: Users },
-  { label: "Tools Listed", value: "2.4K+", icon: Package },
-  { label: "Questions Answered", value: "18K+", icon: BookOpen },
-  { label: "Bounties Paid", value: "$240K+", icon: Zap },
+// Stats are loaded dynamically from DB
+const STATS_FALLBACK = [
+  { label: "Builders", value: "—", icon: Users },
+  { label: "Tools Listed", value: "—", icon: Package },
+  { label: "Questions Answered", value: "—", icon: BookOpen },
+  { label: "Bounties Paid", value: "—", icon: Zap },
 ];
 
 const TECH_STACK_TAGS = [
@@ -109,6 +110,18 @@ export default function LandingPage() {
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const [typedText, setTypedText] = useState("");
   const [currentLine, setCurrentLine] = useState(0);
+  const [stats, setStats] = useState<{
+    users: number; posts: number; questions: number;
+    bounties: number; listings: number; guilds: number; bountyRewardsPaid: number;
+  } | null>(null);
+
+  // Fetch real stats
+  useEffect(() => {
+    fetch("/api/stats")
+      .then(r => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   const lines = CODE_DEMO.split("\n");
 
@@ -187,10 +200,17 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="flex justify-center mb-8"
           >
-            <Badge variant="default" className="px-4 py-1.5 text-sm gap-2">
-              <span className="w-2 h-2 bg-void-green rounded-full animate-pulse" />
-              Now in public beta — join 10,000+ builders
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant="default" className="px-4 py-1.5 text-sm gap-2">
+                <span className="w-2 h-2 bg-void-green rounded-full animate-pulse" />
+                Now in public beta
+              </Badge>
+              <Link href="/dark">
+                <Badge variant="default" className="px-4 py-1.5 text-sm gap-2 bg-void-purple/20 border-void-purple/40 text-void-purple hover:bg-void-purple/30 transition-colors cursor-pointer">
+                  🖤 Anonymous posting — try Dark Mode
+                </Badge>
+              </Link>
+            </div>
           </motion.div>
 
           {/* Headline */}
@@ -215,7 +235,7 @@ export default function LandingPage() {
             className="text-lg sm:text-xl text-void-muted max-w-2xl mx-auto mb-10 leading-relaxed"
           >
             Social network + marketplace + knowledge base. Built exclusively for
-            developers and hackers. No engagement bait. No algorithm. Just builders.
+            developers. <span className="text-void-purple font-semibold">Go fully anonymous with one click.</span> No engagement bait. No algorithm. Just builders.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -318,10 +338,132 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Dark Mode — HERO FEATURE */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-void-purple/5 via-transparent to-void-purple/5 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-void-purple/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-void-purple/10 border border-void-purple/30 text-void-purple text-sm font-mono mb-6">
+              🖤 <span className="font-bold">VOID&apos;s most unique feature</span>
+            </div>
+            <h2 className="text-5xl sm:text-6xl font-black tracking-tighter text-void-text mb-4">
+              Ask the question you&apos;ve been
+              <br />
+              <span className="text-gradient-purple">afraid to ask.</span>
+            </h2>
+            <p className="text-void-muted text-xl max-w-2xl mx-auto">
+              One click. You become <code className="text-void-purple bg-void-surface px-2 py-0.5 rounded">ghost_0x7f</code>. Zero link to your real identity. Ever.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Left: live demo */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="rounded-2xl border border-void-purple/30 bg-void-card overflow-hidden shadow-2xl shadow-void-purple/10"
+            >
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-void-border bg-void-surface">
+                <div className="w-2 h-2 bg-void-purple rounded-full animate-pulse" />
+                <span className="text-xs font-mono text-void-purple font-bold">🖤 dark mode active</span>
+                <span className="ml-auto text-xs font-mono text-void-muted">ghost_0x7f</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {[
+                  { handle: "ghost_0x7f", text: "why does everyone act like async/await is hard? it's just callbacks with extra steps and I've been too scared to say this for 2 years", reactions: "⚡ 47  🧠 23", time: "2m" },
+                  { handle: "null_ptr_42", text: "hot take: most microservices architectures are just distributed monoliths with extra latency and nobody wants to admit it", reactions: "⚡ 89  ⏱️ 34", time: "8m" },
+                  { handle: "void_kernel_3f", text: "i've been writing Go for 3 years and I still don't understand when to use channels vs mutexes. too embarrassed to ask at work", reactions: "⚡ 156  🧠 67", time: "15m" },
+                  { handle: "anon_0xdeadbeef", text: "does anyone else just copy-paste from Stack Overflow without fully understanding it and ship to prod? asking for a friend", reactions: "⚡ 312  ⏱️ 89", time: "1h" },
+                ].map(({ handle, text, reactions, time }) => (
+                  <div key={handle} className="p-3 rounded-xl bg-void-surface border border-void-border hover:border-void-purple/20 transition-colors">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-full bg-void-purple/20 border border-void-purple/30 flex items-center justify-center text-[10px]">🖤</div>
+                      <span className="text-xs font-mono text-void-purple font-bold">{handle}</span>
+                      <span className="ml-auto text-[10px] font-mono text-void-muted">{time} ago</span>
+                    </div>
+                    <p className="text-xs text-void-muted leading-relaxed mb-2">{text}</p>
+                    <p className="text-[10px] font-mono text-void-muted/60">{reactions}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Right: feature list */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-4"
+            >
+              {[
+                {
+                  emoji: "🎭",
+                  title: "New random handle every session",
+                  desc: "ghost_0x7f, null_ptr_42, void_kernel_3f — generated fresh each time. No pattern, no history.",
+                },
+                {
+                  emoji: "🔒",
+                  title: "Zero identity link — cryptographically",
+                  desc: "The platform stores no connection between your real account and dark mode sessions. Not even we can trace it.",
+                },
+                {
+                  emoji: "💬",
+                  title: "Ask anything without reputation damage",
+                  desc: "Beginner questions, controversial opinions, embarrassing mistakes. Your real reputation stays clean.",
+                },
+                {
+                  emoji: "🌑",
+                  title: "Full platform access anonymously",
+                  desc: "Post, ask questions, submit bounties, browse — all without revealing who you are.",
+                },
+                {
+                  emoji: "⌨️",
+                  title: "One keyboard shortcut",
+                  desc: "⌘⇧D from anywhere in the app. Instant toggle. No menus, no friction.",
+                },
+              ].map(({ emoji, title, desc }) => (
+                <div key={title} className="flex gap-4 p-4 rounded-xl border border-void-border bg-void-card hover:border-void-purple/20 transition-colors">
+                  <span className="text-2xl flex-shrink-0">{emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-mono font-bold text-void-text mb-1">{title}</h3>
+                    <p className="text-xs text-void-muted leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+
+              <Link href="/dark" className="block">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-4 px-6 rounded-xl bg-void-purple text-void-bg font-mono font-bold text-center text-sm flex items-center justify-center gap-2 glow-purple cursor-pointer"
+                >
+                  🖤 Try Dark Mode now — it&apos;s free
+                  <ArrowRight className="w-4 h-4" />
+                </motion.div>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats — real DB numbers */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-void-border">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map(({ label, value, icon: Icon }, i) => (
+          {[
+            { label: "Builders", value: stats ? (stats.users > 0 ? stats.users.toLocaleString() : "Be first") : "…", icon: Users },
+            { label: "Tools Listed", value: stats ? (stats.listings > 0 ? stats.listings.toLocaleString() : "List yours") : "…", icon: Package },
+            { label: "Questions Answered", value: stats ? (stats.questions > 0 ? stats.questions.toLocaleString() : "Ask first") : "…", icon: BookOpen },
+            { label: "Guilds", value: stats ? (stats.guilds > 0 ? stats.guilds.toLocaleString() : "Create one") : "…", icon: Users },
+          ].map(({ label, value, icon: Icon }, i) => (
             <motion.div
               key={label}
               initial={{ opacity: 0, y: 20 }}
@@ -423,129 +565,83 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Dark Mode Feature Highlight */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 border-y border-void-border">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge variant="default" className="mb-4">
-                🖤 Privacy Feature
-              </Badge>
-              <h2 className="text-4xl font-black tracking-tighter text-void-text mb-4">
-                Go completely
-                <br />
-                <span className="text-gradient-purple">anonymous.</span>
-              </h2>
-              <p className="text-void-muted leading-relaxed mb-6">
-                One click. Your identity disappears. You become{" "}
-                <code className="text-void-purple bg-void-surface px-1.5 py-0.5 rounded text-sm">
-                  ghost_0x7f
-                </code>{" "}
-                or some other random handle. Ask the beginner question you&apos;ve been
-                afraid to ask. Post the controversial opinion. Browse without a trace.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "New random handle every session",
-                  "Zero link to your real account — ever",
-                  "Platform stores no connection between identities",
-                  "Anonymous bounty payouts via crypto",
-                  "🖤 icon so community knows it's anonymous",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm font-mono text-void-muted">
-                    <span className="text-void-purple mt-0.5">→</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="rounded-xl border border-void-purple/30 bg-void-card p-6 glow-purple">
-                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-void-border">
-                  <div className="w-2 h-2 bg-void-purple rounded-full animate-pulse" />
-                  <span className="text-xs font-mono text-void-purple">
-                    dark mode active
-                  </span>
-                  <span className="ml-auto text-xs font-mono text-void-muted">
-                    ghost_0x7f
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { handle: "ghost_0x7f", text: "🖤 why does everyone act like async/await is hard? it's just callbacks with extra steps", time: "2m" },
-                    { handle: "null_ptr_42", text: "🖤 hot take: most microservices architectures are just distributed monoliths with extra latency", time: "5m" },
-                    { handle: "void_kernel_3f", text: "🖤 i've been writing Go for 3 years and I still don't understand when to use channels vs mutexes", time: "12m" },
-                  ].map(({ handle, text, time }) => (
-                    <div key={handle} className="p-3 rounded-lg bg-void-surface border border-void-border">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="w-5 h-5 rounded-full bg-void-purple/20 border border-void-purple/30 flex items-center justify-center">
-                          <span className="text-[8px] text-void-purple">🖤</span>
-                        </div>
-                        <span className="text-xs font-mono text-void-purple">{handle}</span>
-                        <span className="ml-auto text-[10px] font-mono text-void-muted">{time} ago</span>
-                      </div>
-                      <p className="text-xs text-void-muted leading-relaxed">{text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* Reputation System */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 border-t border-void-border">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            className="text-center mb-12"
           >
             <h2 className="text-4xl font-black tracking-tighter text-void-text mb-4">
               Reputation that actually means something.
             </h2>
-            <p className="text-void-muted mb-12 max-w-xl mx-auto">
+            <p className="text-void-muted mb-4 max-w-xl mx-auto">
               Earned through real contributions. Exportable as a signed credential.
               Portable to other platforms.
             </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-void-green/10 border border-void-green/30 text-void-green text-xs font-mono">
+              <Trophy className="w-3.5 h-3.5" />
+              Export your VOID reputation as a verifiable JSON credential — use it on your resume, GitHub, LinkedIn
+            </div>
           </motion.div>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
             {[
-              { level: "NEWCOMER", color: "#94a3b8", score: "0+" },
-              { level: "BUILDER", color: "#34d399", score: "100+" },
-              { level: "HACKER", color: "#38bdf8", score: "500+" },
-              { level: "ARCHITECT", color: "#a78bfa", score: "2000+" },
-              { level: "LEGEND", color: "#f59e0b", score: "10000+" },
-            ].map(({ level, color, score }, i) => (
+              { level: "NEWCOMER", color: "#94a3b8", score: "0+", desc: "Just joined" },
+              { level: "BUILDER", color: "#34d399", score: "100+", desc: "Shipping things" },
+              { level: "HACKER", color: "#38bdf8", score: "500+", desc: "Deep in the stack" },
+              { level: "ARCHITECT", color: "#a78bfa", score: "2000+", desc: "Designing systems" },
+              { level: "LEGEND", color: "#f59e0b", score: "10000+", desc: "Community pillar" },
+            ].map(({ level, color, score, desc }, i) => (
               <motion.div
                 key={level}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-void-border bg-void-card min-w-[120px]"
-                style={{ borderColor: `${color}20` }}
+                className="flex flex-col items-center gap-2 p-5 rounded-xl border bg-void-card min-w-[130px]"
+                style={{ borderColor: `${color}25`, backgroundColor: `${color}05` }}
               >
                 <Trophy className="w-6 h-6" style={{ color }} />
-                <span className="text-sm font-mono font-bold" style={{ color }}>
-                  {level}
-                </span>
+                <span className="text-sm font-mono font-bold" style={{ color }}>{level}</span>
                 <span className="text-xs font-mono text-void-muted">{score} pts</span>
+                <span className="text-[10px] font-mono text-void-muted/60">{desc}</span>
               </motion.div>
             ))}
           </div>
+
+          {/* Credential preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-lg mx-auto rounded-xl border border-void-green/20 bg-void-card overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-void-border bg-void-surface">
+              <div className="flex gap-1">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+              </div>
+              <span className="text-[10px] font-mono text-void-muted">void-reputation-credential.json</span>
+            </div>
+            <pre className="p-4 text-xs font-mono text-void-green/80 leading-relaxed overflow-x-auto">
+{`{
+  "@context": "https://void.dev/credentials/v1",
+  "type": "VoidReputationCredential",
+  "issuer": "https://void.dev",
+  "credentialSubject": {
+    "platform": "VOID",
+    "username": "your_handle",
+    "score": 2847,
+    "level": "ARCHITECT",
+    "memberSince": "2026-01-01T00:00:00Z"
+  }
+}`}
+            </pre>
+          </motion.div>
         </div>
       </section>
 
@@ -564,7 +660,7 @@ export default function LandingPage() {
               Ready to build?
             </h2>
             <p className="text-void-muted text-lg mb-10">
-              Join 10,000+ developers who actually ship things.
+              Join developers who actually ship things.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/auth/signin">

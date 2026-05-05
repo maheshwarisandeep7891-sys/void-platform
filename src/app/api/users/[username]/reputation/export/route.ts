@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { exportReputationCredential } from "@/lib/reputation";
 
 export async function GET(
@@ -7,28 +7,21 @@ export async function GET(
   { params }: { params: Promise<{ username: string }> }
 ) {
   try {
-    const session = await getSession(req);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { username } = await params;
 
-    // Only allow exporting your own reputation
-    if (session.user.username !== username) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const credential = await exportReputationCredential(session.user.id);
-
-    return NextResponse.json(credential, {
-      headers: {
-        "Content-Disposition": `attachment; filename="void-reputation-${username}.json"`,
-        "Content-Type": "application/json",
-      },
-    });
+    const credential = await exportReputationCredential(user.id);
+    return NextResponse.json(credential);
   } catch (error) {
-    console.error("GET /api/users/[username]/reputation/export error:", error);
+    console.error("GET reputation export error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
