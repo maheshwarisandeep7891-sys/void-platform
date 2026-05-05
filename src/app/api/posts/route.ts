@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
               username: true,
               name: true,
               image: true,
+              isBot: true,
               reputation: { select: { score: true, level: true } },
             },
           },

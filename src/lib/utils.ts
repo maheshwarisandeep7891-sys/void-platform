@@ -78,6 +78,10 @@ export const REACTION_EMOJIS: Record<string, string> = {
   brilliant: "🧠",
 };
 
+/** Bot badge — shown next to username for AI accounts */
+export const BOT_BADGE = "⭐";
+export const BOT_BADGE_TITLE = "AI Community Account";
+
 import type { ReputationLevel } from "@prisma/client";
 
 const LEVEL_THRESHOLDS: Record<string, number> = {

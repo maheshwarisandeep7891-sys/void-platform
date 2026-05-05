@@ -37,6 +37,7 @@ interface UserProfile {
   openToMentor: boolean;
   openToTrade: boolean;
   createdAt: string;
+  isBot?: boolean;
   reputation?: { score: number; level: string };
   _count: { posts: number; followers: number; following: number; listings: number };
   isFollowing: boolean;
@@ -178,7 +179,12 @@ export default function ProfilePage() {
         </div>
 
         <div className="mb-3">
-          <h1 className="text-2xl font-black text-void-text">{profile.name ?? profile.username}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-void-text">{profile.name ?? profile.username}</h1>
+            {profile.isBot && (
+              <span title="AI Community Account" className="text-lg cursor-help" aria-label="AI Community Account">⭐</span>
+            )}
+          </div>
           <p className="text-void-muted font-mono text-sm">@{profile.username}</p>
         </div>
 

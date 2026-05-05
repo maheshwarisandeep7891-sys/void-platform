@@ -33,6 +33,7 @@ export async function GET(
         openToMentor: true,
         openToTrade: true,
         createdAt: true,
+        isBot: true,
         reputation: { select: { score: true, level: true } },
         _count: {
           select: {

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   cn, formatDate, getInitials, REPUTATION_COLORS,
-  REACTION_LABELS, REACTION_EMOJIS,
+  REACTION_LABELS, REACTION_EMOJIS, BOT_BADGE, BOT_BADGE_TITLE,
 } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -60,6 +60,7 @@ interface Post {
     username: string;
     name?: string;
     image?: string;
+    isBot?: boolean;
     reputation?: { score: number; level: string };
   };
   tags: { tag: { name: string; slug: string } }[];
@@ -411,6 +412,11 @@ function PostCard({ post, currentUserId }: { post: Post; currentUserId?: string 
                   >
                     @{post.author?.username}
                   </Link>
+                )}
+                {post.author?.isBot && (
+                  <span title={BOT_BADGE_TITLE} className="text-[11px] cursor-help select-none" aria-label="AI Community Account">
+                    {BOT_BADGE}
+                  </span>
                 )}
                 {!post.isDarkMode && (
                   <span
