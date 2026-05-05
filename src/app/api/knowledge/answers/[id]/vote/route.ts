@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { awardReputation } from "@/lib/reputation";
 import { z } from "zod";
+import { awardReputation } from "@/lib/reputation";
 
-const schema = z.object({ value: z.union([z.literal(1), z.literal(-1)]) });
+const schema = z.object({
+  value: z.union([z.literal(1), z.literal(-1)]),
+});
 
 export async function POST(
   req: NextRequest,
@@ -28,28 +30,38 @@ export async function POST(
       if (existing.value === value) {
         // Remove vote
         await prisma.answerVote.delete({ where: { id: existing.id } });
-        return NextResponse.json({ action: "removed" });
+      } else {
+        // Change vote
+        await prisma.answerVote.update({
+          where: { id: existing.id },
+          data: { value },
+        });
       }
-      // Change vote
-      await prisma.answerVote.update({ where: { id: existing.id }, data: { value } });
     } else {
       await prisma.answerVote.create({
         data: { answerId: id, userId: session.user.id, value },
       });
-    }
 
-    // Award reputation to answer author
-    if (value === 1) {
+      // Award reputation to answer author
       const answer = await prisma.answer.findUnique({
         where: { id },
         select: { authorId: true },
       });
       if (answer?.authorId && answer.authorId !== session.user.id) {
-        await awardReputation(answer.authorId, "answer_upvote", "Your answer was upvoted");
+        await awardReputation(
+          answer.authorId,
+          value === 1 ? "answer_upvote" : "answer_downvote",
+          `Your answer received a ${value === 1 ? "upvote" : "downvote"}`
+        );
       }
     }
 
-    return NextResponse.json({ action: "voted", value });
+    const votes = await prisma.answerVote.findMany({
+      where: { answerId: id },
+      select: { value: true, userId: true },
+    });
+
+    return NextResponse.json({ votes });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });

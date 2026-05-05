@@ -45,9 +45,9 @@ interface UserProfile {
   image?: string;
   bannerImage?: string;
   bio?: string;
-  GitBranchUrl?: string;
+  githubUrl?: string;
   websiteUrl?: string;
-  GlobeUrl?: string;
+  twitterUrl?: string;
   techStack: string[];
   openToHire: boolean;
   openToCollaborate: boolean;
@@ -271,15 +271,15 @@ export default function ProfilePage() {
 
         {/* Links */}
         <div className="flex flex-wrap items-center gap-4 mb-4">
-          {profile.GitBranchUrl && (
+          {profile.githubUrl && (
             <a
-              href={profile.GitBranchUrl}
+              href={profile.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs font-mono text-void-muted hover:text-void-text transition-colors"
             >
               <GitBranch className="w-3.5 h-3.5" />
-              GitBranch
+              GitHub
             </a>
           )}
           {profile.websiteUrl && (
@@ -293,15 +293,15 @@ export default function ProfilePage() {
               Website
             </a>
           )}
-          {profile.GlobeUrl && (
+          {profile.twitterUrl && (
             <a
-              href={profile.GlobeUrl}
+              href={profile.twitterUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs font-mono text-void-muted hover:text-void-text transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
-              Globe
+              Twitter
             </a>
           )}
           <span className="flex items-center gap-1.5 text-xs font-mono text-void-muted">

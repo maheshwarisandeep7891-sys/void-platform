@@ -17,7 +17,7 @@ export async function POST(
 
     const answer = await prisma.answer.findUnique({
       where: { id },
-      include: { question: { select: { authorId: true, id: true } } },
+      include: { question: { select: { authorId: true } } },
     });
 
     if (!answer) {
@@ -26,41 +26,34 @@ export async function POST(
 
     // Only question author can accept
     if (answer.question.authorId !== session.user.id) {
-      return NextResponse.json({ error: "Only the question author can accept answers" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Unaccept all other answers for this question
+    const newAccepted = !answer.isAccepted;
+
+    // Unaccept all other answers for this question first
     await prisma.answer.updateMany({
-      where: { questionId: answer.question.id },
+      where: { questionId: answer.questionId },
       data: { isAccepted: false },
     });
 
-    // Accept this answer
-    await prisma.answer.update({
-      where: { id },
-      data: { isAccepted: true },
-    });
-
-    // Award reputation to answer author
-    if (answer.authorId !== session.user.id) {
-      await awardReputation(
-        answer.authorId,
-        "answer_accepted",
-        "Your answer was accepted as the best answer"
-      );
-
-      await prisma.notification.create({
-        data: {
-          userId: answer.authorId,
-          type: "ANSWER_ACCEPTED",
-          title: "Your answer was accepted! ✓",
-          body: "The question author marked your answer as the best answer.",
-          link: `/knowledge/${answer.question.id}`,
-        },
+    if (newAccepted) {
+      await prisma.answer.update({
+        where: { id },
+        data: { isAccepted: true },
       });
+
+      // Award reputation to answer author
+      if (answer.authorId !== session.user.id) {
+        await awardReputation(
+          answer.authorId,
+          "answer_accepted",
+          "Your answer was accepted as the best answer"
+        );
+      }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ isAccepted: newAccepted });
   } catch (error) {
     console.error("POST /api/knowledge/answers/[id]/accept error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -25,6 +25,20 @@ export async function GET(req: NextRequest) {
 
     if (type) where.type = type;
 
+    // Filter by author username
+    const author = searchParams.get("author");
+    if (author) {
+      const authorUser = await prisma.user.findUnique({
+        where: { username: author },
+        select: { id: true },
+      });
+      if (authorUser) {
+        where.authorId = authorUser.id;
+      } else {
+        return NextResponse.json({ posts: [], total: 0, hasMore: false, page });
+      }
+    }
+
     if (tech !== "All") {
       where.tags = {
         some: {

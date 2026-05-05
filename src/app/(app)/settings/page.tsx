@@ -38,9 +38,9 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({
     name: "",
     bio: "",
-    GitBranchUrl: "",
+    githubUrl: "",
     websiteUrl: "",
-    GlobeUrl: "",
+    twitterUrl: "",
     techStack: [] as string[],
     openToHire: false,
     openToCollaborate: false,
@@ -58,9 +58,9 @@ export default function SettingsPage() {
         setProfile({
           name: data.name ?? "",
           bio: data.bio ?? "",
-          GitBranchUrl: data.GitBranchUrl ?? "",
+          githubUrl: data.githubUrl ?? "",
           websiteUrl: data.websiteUrl ?? "",
-          GlobeUrl: data.GlobeUrl ?? "",
+          twitterUrl: data.twitterUrl ?? "",
           techStack: data.techStack ?? [],
           openToHire: data.openToHire ?? false,
           openToCollaborate: data.openToCollaborate ?? false,
@@ -207,9 +207,9 @@ export default function SettingsPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { key: "GitBranchUrl", label: "GitBranch URL", placeholder: "https://GitBranch.com/username" },
+                  { key: "githubUrl", label: "GitHub URL", placeholder: "https://github.com/username" },
                   { key: "websiteUrl", label: "Website", placeholder: "https://yoursite.com" },
-                  { key: "GlobeUrl", label: "Globe/X", placeholder: "https://Globe.com/username" },
+                  { key: "twitterUrl", label: "Twitter / X", placeholder: "https://twitter.com/username" },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <label className="text-xs font-mono text-void-muted mb-1.5 block">
@@ -336,7 +336,7 @@ export default function SettingsPage() {
             </h3>
             <div className="space-y-3">
               {[
-                { provider: "GitBranch", connected: true },
+                { provider: "GitHub", connected: true },
                 { provider: "Google", connected: false },
               ].map(({ provider, connected }) => (
                 <div key={provider} className="flex items-center justify-between p-3 rounded-lg bg-void-surface border border-void-border">
