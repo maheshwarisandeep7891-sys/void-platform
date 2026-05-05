@@ -8,8 +8,7 @@ import {
   MessageSquare, Bookmark, Share2, MoreHorizontal,
   Plus, RefreshCw, TrendingUp, Clock, Users,
   ChevronRight, Filter,
-} from "lucide-react";
-import { useSession } from "@/hooks/use-session";
+} from "lucide-react";import { useSession } from "@/hooks/use-session";
 import { useLiveFeed } from "@/hooks/use-live-feed";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -270,14 +269,37 @@ export default function FeedPage() {
               <div className="w-16 h-16 rounded-2xl bg-void-surface border border-void-border flex items-center justify-center mx-auto mb-4">
                 <Terminal className="w-8 h-8 text-void-muted" />
               </div>
-              <p className="text-void-text font-mono font-bold mb-1">No posts yet</p>
-              <p className="text-void-muted font-mono text-sm mb-6">Be the first to share something.</p>
-              <Link href="/post/new">
-                <Button className="font-mono gap-1.5">
-                  <Plus className="w-4 h-4" />
-                  Create first post
-                </Button>
-              </Link>
+              {filter === "following" ? (
+                <>
+                  <p className="text-void-text font-mono font-bold mb-1">No one to follow yet</p>
+                  <p className="text-void-muted font-mono text-sm mb-6">Follow builders to see their posts here.</p>
+                  <div className="flex gap-3 justify-center">
+                    <Link href="/leaderboard">
+                      <Button variant="outline" className="font-mono gap-1.5">
+                        <Users className="w-4 h-4" />
+                        Find builders
+                      </Button>
+                    </Link>
+                    <Link href="/explore">
+                      <Button className="font-mono gap-1.5">
+                        <ChevronRight className="w-4 h-4" />
+                        Explore
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-void-text font-mono font-bold mb-1">No posts yet</p>
+                  <p className="text-void-muted font-mono text-sm mb-6">Be the first to share something.</p>
+                  <Link href="/post/new">
+                    <Button className="font-mono gap-1.5">
+                      <Plus className="w-4 h-4" />
+                      Create first post
+                    </Button>
+                  </Link>
+                </>
+              )}
             </motion.div>
           ) : (
             posts.map((post, i) => (

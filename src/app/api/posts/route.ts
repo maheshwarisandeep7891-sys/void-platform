@@ -139,6 +139,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Resolve dark handle from session if dark mode
+    let resolvedDarkHandle: string | undefined;
+    if (data.isDarkMode && data.darkSessionId) {
+      const { validateDarkModeSession } = await import("@/lib/dark-mode");
+      const validation = await validateDarkModeSession(data.darkSessionId);
+      if (validation.valid) {
+        resolvedDarkHandle = validation.handle;
+      }
+    }
+
     const post = await prisma.post.create({
       data: {
         type: data.type,
@@ -149,7 +159,7 @@ export async function POST(req: NextRequest) {
         images: data.images ?? [],
         links: data.links ?? [],
         isDarkMode: data.isDarkMode ?? false,
-        darkHandle: data.isDarkMode ? undefined : undefined,
+        darkHandle: resolvedDarkHandle,
         darkSessionId: data.darkSessionId,
         authorId: data.isDarkMode ? null : session.user.id,
         publishedAt: data.scheduledAt ? null : new Date(),

@@ -398,10 +398,25 @@ function AnswerCard({
   onVote: (id: string, value: 1 | -1) => void;
   onAccept: (id: string) => void;
 }) {
+  const { toast } = useToast();
   const repLevel = answer.author.reputation?.level ?? "NEWCOMER";
   const repColor = REPUTATION_COLORS[repLevel];
   const score = answer.votes.reduce((s, v) => s + v.value, 0);
   const userVote = answer.votes.find(v => v.userId === currentUserId)?.value ?? 0;
+  const [stillWorks, setStillWorks] = useState(answer.stillWorksAt);
+
+  const handleStillWorks = async () => {
+    if (!currentUserId) { toast({ title: "Sign in to verify", variant: "destructive" }); return; }
+    try {
+      const res = await fetch(`/api/knowledge/answers/${answer.id}/still-works`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setStillWorks(data.stillWorksAt);
+      toast({ title: "Marked as still working!" });
+    } catch {
+      toast({ title: "Failed to mark", variant: "destructive" });
+    }
+  };
 
   return (
     <Card className={cn(
@@ -495,10 +510,18 @@ function AnswerCard({
             <span className="text-[10px] font-mono text-void-muted ml-auto">
               {formatDate(answer.createdAt)}
             </span>
-            {answer.stillWorksAt && (
+            {stillWorks && (
               <span className="text-[9px] font-mono text-void-green flex items-center gap-1">
-                ✓ Still works · {formatDate(answer.stillWorksAt)}
+                ✓ Still works · {formatDate(stillWorks)}
               </span>
+            )}
+            {!stillWorks && currentUserId && (
+              <button
+                onClick={handleStillWorks}
+                className="text-[9px] font-mono text-void-muted hover:text-void-green transition-colors flex items-center gap-1 border border-void-border hover:border-void-green/30 px-1.5 py-0.5 rounded"
+              >
+                ✓ Still works?
+              </button>
             )}
           </div>
         </div>

@@ -33,53 +33,46 @@ interface UseLiveFeedReturn {
 export function useLiveFeed(enabled = true): UseLiveFeedReturn {
   const [newPosts, setNewPosts] = useState<LivePost[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const esRef = useRef<EventSource | null>(null);
-  const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastTimestampRef = useRef<string>(new Date().toISOString());
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const connect = useCallback(() => {
+  const poll = useCallback(async () => {
     if (!enabled || typeof window === "undefined") return;
+    try {
+      const res = await fetch(`/api/feed/stream?since=${encodeURIComponent(lastTimestampRef.current)}`);
+      if (!res.ok) return;
+      const data = await res.json();
 
-    const es = new EventSource("/api/feed/stream");
-    esRef.current = es;
-
-    es.addEventListener("connected", () => {
       setIsConnected(true);
-    });
+      lastTimestampRef.current = data.timestamp;
 
-    es.addEventListener("new_posts", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.posts?.length > 0) {
-          setNewPosts(prev => {
-            // Deduplicate
-            const existingIds = new Set(prev.map((p: LivePost) => p.id));
-            const fresh = data.posts.filter((p: LivePost) => !existingIds.has(p.id));
-            return [...fresh, ...prev];
-          });
-        }
-      } catch {}
-    });
-
-    es.addEventListener("heartbeat", () => {
-      setIsConnected(true);
-    });
-
-    es.onerror = () => {
+      if (data.posts?.length > 0) {
+        setNewPosts(prev => {
+          const existingIds = new Set(prev.map((p: LivePost) => p.id));
+          const fresh = data.posts.filter((p: LivePost) => !existingIds.has(p.id));
+          return fresh.length > 0 ? [...fresh, ...prev] : prev;
+        });
+      }
+    } catch {
       setIsConnected(false);
-      es.close();
-      esRef.current = null;
-      // Reconnect after 15s
-      reconnectTimer.current = setTimeout(connect, 15000);
-    };
+    }
   }, [enabled]);
 
   useEffect(() => {
-    connect();
+    if (!enabled) return;
+
+    // Initial poll after 10s
+    const initialTimer = setTimeout(() => {
+      poll();
+      // Then poll every 10s
+      intervalRef.current = setInterval(poll, 10000);
+    }, 10000);
+
     return () => {
-      esRef.current?.close();
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      clearTimeout(initialTimer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [connect]);
+  }, [enabled, poll]);
 
   const clearNewPosts = useCallback(() => setNewPosts([]), []);
 

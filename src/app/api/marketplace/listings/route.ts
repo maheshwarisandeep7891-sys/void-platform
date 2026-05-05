@@ -19,8 +19,23 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * PAGE_SIZE;
 
+    // Map frontend category IDs to DB values
+    const CATEGORY_MAP: Record<string, string> = {
+      saas: "SaaS Seats",
+      api: "API Credits",
+      licenses: "Software Licenses",
+      projects: "Side Projects",
+      gpu: "GPU Access",
+      datasets: "Datasets",
+      cli: "CLI Tools",
+      templates: "Templates",
+      services: "Digital Services",
+    };
+
     const where: any = { status: "ACTIVE" };
-    if (category) where.category = category;
+    if (category && category !== "all") {
+      where.category = CATEGORY_MAP[category] ?? category;
+    }
     if (type) where.type = type;
     if (minPrice) where.price = { ...where.price, gte: parseFloat(minPrice) };
     if (maxPrice) where.price = { ...where.price, lte: parseFloat(maxPrice) };

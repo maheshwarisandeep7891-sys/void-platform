@@ -80,6 +80,11 @@ export default function NewPostPage() {
       return;
     }
 
+    // Read dark mode session from sessionStorage
+    const darkSessionId = isDarkMode
+      ? (typeof window !== "undefined" ? sessionStorage.getItem("darkModeSessionId") ?? undefined : undefined)
+      : undefined;
+
     setLoading(true);
     try {
       const res = await fetch("/api/posts", {
@@ -93,6 +98,7 @@ export default function NewPostPage() {
           language: postType === "SNIPPET" ? language : undefined,
           tags,
           isDarkMode,
+          darkSessionId,
           images: images.length > 0 ? images : undefined,
         }),
       });

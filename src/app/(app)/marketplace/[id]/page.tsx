@@ -95,6 +95,23 @@ export default function ListingDetailPage() {
       .finally(() => setLoading(false));
   }, [params.id]);
 
+  const handleSave = async () => {
+    if (!session) { toast({ title: "Sign in to save listings", variant: "destructive" }); return; }
+    try {
+      if (saved) {
+        await fetch(`/api/marketplace/listings/${params.id}/save`, { method: "DELETE" });
+        setSaved(false);
+        toast({ title: "Removed from saved" });
+      } else {
+        await fetch(`/api/marketplace/listings/${params.id}/save`, { method: "POST" });
+        setSaved(true);
+        toast({ title: "Saved to your list!" });
+      }
+    } catch {
+      toast({ title: "Failed to save", variant: "destructive" });
+    }
+  };
+
   const handlePurchase = async () => {
     if (!session) {
       router.push("/auth/signin");
@@ -395,16 +412,16 @@ export default function ListingDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSaved((p) => !p)}
+              onClick={handleSave}
               className={cn("flex-1 font-mono gap-1.5", saved && "text-void-purple border-void-purple/30")}
             >
-              <Bookmark className="w-3.5 h-3.5" />
+              <Bookmark className={cn("w-3.5 h-3.5", saved && "fill-current")} />
               {saved ? "Saved" : "Save"}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigator.clipboard.writeText(window.location.href)}
+              onClick={() => { navigator.clipboard.writeText(window.location.href); toast({ title: "Link copied!" }); }}
               className="flex-1 font-mono gap-1.5"
             >
               <Share2 className="w-3.5 h-3.5" />
