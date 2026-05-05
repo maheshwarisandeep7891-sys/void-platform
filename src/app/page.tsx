@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { VoidLogo } from "@/components/ui/void-logo";
 
 const FEATURES = [
   {
@@ -155,25 +156,16 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-void-bg overflow-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-void-border/50 bg-void-bg/80 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(5,5,8,0.8)] backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-void-purple flex items-center justify-center">
-                <Code2 className="w-4 h-4 text-void-bg" />
-              </div>
-              <span className="text-xl font-black tracking-tighter text-void-text font-mono">
-                VOID
-              </span>
-            </div>
+            <VoidLogo size={32} variant="full" />
             <div className="flex items-center gap-3">
               <Link href="/auth/signin">
-                <Button variant="ghost" size="sm" className="font-mono">
-                  Sign in
-                </Button>
+                <Button variant="ghost" size="sm" className="font-mono">Sign in</Button>
               </Link>
               <Link href="/auth/signin">
-                <Button size="sm" className="font-mono gap-1.5">
+                <Button size="sm" variant="gradient" className="font-mono gap-1.5">
                   Join VOID
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
@@ -185,9 +177,10 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative min-h-screen flex items-center justify-center grid-bg pt-14">
-        {/* Gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-void-purple/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-void-cyan/5 rounded-full blur-3xl pointer-events-none" />
+        {/* Premium gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-void-purple/8 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-void-cyan/6 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-void-purple/4 rounded-full blur-[150px] pointer-events-none" />
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
@@ -501,7 +494,7 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: Icon, title, description, color, items }, i) => (
               <motion.div
                 key={title}
@@ -512,28 +505,27 @@ export default function LandingPage() {
               >
                 <Card
                   hover
-                  className="p-6 h-full flex flex-col group"
+                  gradient
+                  className="p-6 h-full flex flex-col group border-void-border/60"
                 >
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
                       color === "purple"
-                        ? "bg-void-purple/10 border border-void-purple/20"
+                        ? "bg-void-purple/12 border border-void-purple/20 shadow-[0_0_16px_rgba(139,92,246,0.15)]"
                         : color === "cyan"
-                        ? "bg-void-cyan/10 border border-void-cyan/20"
-                        : "bg-void-green/10 border border-void-green/20"
+                        ? "bg-void-cyan/10 border border-void-cyan/20 shadow-[0_0_16px_rgba(6,182,212,0.12)]"
+                        : "bg-void-green/10 border border-void-green/20 shadow-[0_0_16px_rgba(16,185,129,0.12)]"
                     }`}
                   >
                     <Icon
                       className={`w-5 h-5 ${
-                        color === "purple"
-                          ? "text-void-purple"
-                          : color === "cyan"
-                          ? "text-void-cyan"
-                          : "text-void-green"
+                        color === "purple" ? "text-[#a78bfa]"
+                        : color === "cyan" ? "text-void-cyan"
+                        : "text-void-green"
                       }`}
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-void-text mb-2 font-mono">
+                  <h3 className="text-base font-bold text-void-text mb-2 font-mono group-hover:text-void-purple transition-colors">
                     {title}
                   </h3>
                   <p className="text-void-muted text-sm leading-relaxed mb-4 flex-1">
@@ -541,19 +533,12 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-1.5">
                     {items.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-center gap-2 text-xs font-mono text-void-muted"
-                      >
-                        <ChevronRight
-                          className={`w-3 h-3 flex-shrink-0 ${
-                            color === "purple"
-                              ? "text-void-purple"
-                              : color === "cyan"
-                              ? "text-void-cyan"
-                              : "text-void-green"
-                          }`}
-                        />
+                      <li key={item} className="flex items-center gap-2 text-xs font-mono text-void-muted">
+                        <ChevronRight className={`w-3 h-3 flex-shrink-0 ${
+                          color === "purple" ? "text-[#a78bfa]"
+                          : color === "cyan" ? "text-void-cyan"
+                          : "text-void-green"
+                        }`} />
                         {item}
                       </li>
                     ))}
@@ -653,8 +638,8 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="w-16 h-16 rounded-2xl bg-void-purple flex items-center justify-center mx-auto mb-8 glow-purple">
-              <Code2 className="w-8 h-8 text-void-bg" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8 glow-purple">
+              <VoidLogo size={48} animated />
             </div>
             <h2 className="text-5xl font-black tracking-tighter text-void-text mb-4">
               Ready to build?
@@ -686,10 +671,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-md bg-void-purple flex items-center justify-center">
-                  <Code2 className="w-3.5 h-3.5 text-void-bg" />
-                </div>
-                <span className="font-black font-mono text-void-text">VOID</span>
+                <VoidLogo size={24} variant="full" />
               </div>
               <p className="text-xs font-mono text-void-muted leading-relaxed">
                 The internet&apos;s home for people who actually build things.

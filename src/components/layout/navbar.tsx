@@ -5,29 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Terminal,
-  Bell,
-  MessageSquare,
-  Search,
-  Plus,
-  ChevronDown,
-  LogOut,
-  Settings,
-  User,
-  Shield,
-  Zap,
-  Trophy,
-  Store,
-  BookOpen,
-  Users,
-  Code2,
-  Moon,
+  Terminal, Bell, MessageSquare, Search, Plus,
+  ChevronDown, LogOut, Settings, User, Zap,
+  Trophy, Store, BookOpen, Users, Moon,
 } from "lucide-react";
 import { useSession, signOut } from "@/hooks/use-session";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { VoidLogo } from "@/components/ui/void-logo";
+import { SearchModal } from "@/components/search-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn, getInitials, REPUTATION_COLORS } from "@/lib/utils";
-import { SearchModal } from "@/components/search-modal";
 
 const NAV_LINKS = [
   { href: "/feed", label: "Feed", icon: Terminal },
@@ -89,47 +76,37 @@ export function Navbar() {
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
           scrolled
-            ? "bg-void-bg/95 backdrop-blur-xl border-b border-void-border shadow-lg shadow-black/20"
+            ? "glass-strong border-b border-[rgba(255,255,255,0.06)] shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
             : "bg-transparent",
-          isDarkMode && "border-b border-void-purple/30"
+          isDarkMode && "border-b border-void-purple/20"
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2"
-              >
-                <div className="w-7 h-7 rounded-lg bg-void-purple flex items-center justify-center">
-                  <Code2 className="w-4 h-4 text-void-bg" />
-                </div>
-                <span className="text-xl font-black tracking-tighter text-void-text font-mono">
-                  VOID
-                </span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <VoidLogo size={32} variant="full" />
               </motion.div>
               {isDarkMode && (
-                <span className="text-xs font-mono text-void-purple animate-pulse">
-                  🖤 dark
-                </span>
+                <span className="text-xs font-mono text-void-purple animate-pulse">🖤 dark</span>
               )}
             </Link>
 
             {/* Nav Links */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-0.5">
               {NAV_LINKS.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-mono transition-all duration-150",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-mono transition-all duration-150",
                     pathname?.startsWith(href)
-                      ? "text-void-text bg-void-surface border border-void-border"
-                      : "text-void-muted hover:text-void-text hover:bg-void-surface/50"
+                      ? "text-void-text bg-void-surface/80 border border-void-border shadow-[0_0_12px_rgba(139,92,246,0.1)]"
+                      : "text-void-muted hover:text-void-text hover:bg-void-surface/40"
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className={cn("w-3.5 h-3.5", pathname?.startsWith(href) ? "text-void-purple" : "")} />
                   {label}
                 </Link>
               ))}

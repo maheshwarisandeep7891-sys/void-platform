@@ -8,13 +8,17 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
+
+const inter = undefined; // removed
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://void-platform.vercel.app"),
@@ -98,13 +102,11 @@ export default function RootLayout({
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Premium font: Geist for headings */}
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-void-bg text-void-text antialiased">
+      <body className="bg-void-bg text-void-text antialiased bg-gradient-void">
         <Providers>
           {children}
           <Toaster />
