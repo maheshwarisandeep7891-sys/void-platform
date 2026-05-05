@@ -14,11 +14,13 @@ function randInt(min: number, max: number): number {
 }
 
 /**
- * Bot Activity Cron — runs daily at 6am UTC
- * Simulates 8 rounds of 3-hour activity to spread posts throughout the day
- * Vercel Hobby plan only allows daily crons
+ * Bot Activity Cron
+ * Called every hour by cron-job.org (external free cron service)
+ * ~20 bots post per hour = ~480 posts/day across 500 bots
+ * Also reacts to real user posts and answers questions
  */
 export async function GET(req: NextRequest) {
+  // Verify cron secret
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -28,101 +30,110 @@ export async function GET(req: NextRequest) {
   try {
     const results = { posts: 0, reactions: 0, comments: 0, answers: 0 };
 
+    // Get all bot accounts (sample 100 random ones per run for efficiency)
+    const totalBots = await prisma.user.count({ where: { isBot: true } });
+    const skip = Math.floor(Math.random() * Math.max(0, totalBots - 100));
+
     const bots = await prisma.user.findMany({
       where: { isBot: true },
       select: { id: true, botPersona: true, techStack: true, username: true },
+      skip,
+      take: 100,
     });
 
     if (bots.length === 0) {
       return NextResponse.json({ message: "No bots found", results });
     }
 
-    // ── 1. Post creation — 8 rounds simulating 3h intervals ─────────────────
-    const ROUNDS = 8;
-    for (let round = 0; round < ROUNDS; round++) {
-      const postingBots = bots.filter(() => Math.random() < 0.04);
-      const hoursAgo = round * 3 + randInt(0, 2);
-      const postTime = new Date(Date.now() - hoursAgo * 3600000);
+    // ── 1. ~20% of sampled bots post something new this hour ────────────────
+    const postingBots = bots.filter(() => Math.random() < 0.20);
 
-      for (const bot of postingBots) {
-        try {
-          const persona = bot.botPersona ?? "systems";
-          const techStack = bot.techStack.length > 0 ? bot.techStack : ["TypeScript", "Go"];
-          const content = generatePostContent(persona, techStack);
+    for (const bot of postingBots) {
+      try {
+        const persona = bot.botPersona ?? "systems";
+        const techStack = bot.techStack.length > 0 ? bot.techStack : ["TypeScript", "Go"];
+        const content = generatePostContent(persona, techStack);
 
-          const tagConnections = [];
-          for (const tagName of content.tags.slice(0, 3)) {
-            const slug = tagName.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 50);
-            if (!slug) continue;
-            const tag = await prisma.tag.upsert({
-              where: { slug },
-              create: { name: tagName, slug },
-              update: {},
-            });
-            tagConnections.push({ tagId: tag.id });
-          }
-
-          await prisma.post.create({
-            data: {
-              type: content.type,
-              title: content.title?.slice(0, 200),
-              content: content.content,
-              codeSnippet: content.codeSnippet,
-              language: content.language,
-              authorId: bot.id,
-              publishedAt: postTime,
-              createdAt: postTime,
-              tags: { create: tagConnections },
-            },
+        const tagConnections = [];
+        for (const tagName of content.tags.slice(0, 3)) {
+          const slug = tagName.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 50);
+          if (!slug) continue;
+          const tag = await prisma.tag.upsert({
+            where: { slug },
+            create: { name: tagName, slug },
+            update: {},
           });
-
-          await awardReputation(bot.id, "post_created", `Bot posted a ${content.type.toLowerCase()}`);
-          results.posts++;
-        } catch {
-          // Skip silently
+          tagConnections.push({ tagId: tag.id });
         }
+
+        // Stagger post times within the hour
+        const minutesAgo = randInt(0, 55);
+        const postTime = new Date(Date.now() - minutesAgo * 60000);
+
+        await prisma.post.create({
+          data: {
+            type: content.type,
+            title: content.title?.slice(0, 200),
+            content: content.content,
+            codeSnippet: (content as any).codeSnippet,
+            language: (content as any).language,
+            authorId: bot.id,
+            publishedAt: postTime,
+            createdAt: postTime,
+            tags: { create: tagConnections },
+          },
+        });
+
+        await awardReputation(bot.id, "post_created", `Bot posted a ${content.type.toLowerCase()}`);
+        results.posts++;
+      } catch {
+        // Skip silently
       }
     }
 
-    // ── 2. React to recent real-user posts ───────────────────────────────────
+    // ── 2. React to real user posts from the last 2 hours ───────────────────
     const recentRealPosts = await prisma.post.findMany({
       where: {
         publishedAt: { not: null },
         author: { isBot: false },
-        createdAt: { gte: new Date(Date.now() - 24 * 3600000) },
+        createdAt: { gte: new Date(Date.now() - 2 * 3600000) },
       },
       select: { id: true, authorId: true },
-      take: 30,
+      take: 20,
     });
 
     const reactionTypes = ["used_this", "saved_me_hours", "brilliant"];
     for (const post of recentRealPosts) {
-      const reactors = bots.sort(() => Math.random() - 0.5).slice(0, randInt(3, 12));
+      // 3-8 bots react to each new real post
+      const reactors = bots
+        .sort(() => Math.random() - 0.5)
+        .slice(0, randInt(3, 8));
+
       for (const reactor of reactors) {
         try {
           await prisma.postReaction.create({
             data: { postId: post.id, userId: reactor.id, type: pick(reactionTypes) },
           });
           if (post.authorId) {
-            await awardReputation(post.authorId, "post_reaction", "Bot reacted to your post");
+            await awardReputation(post.authorId, "post_reaction", "Your post got a reaction");
           }
           results.reactions++;
         } catch { /* skip duplicates */ }
       }
     }
 
-    // ── 3. Comment on recent posts ───────────────────────────────────────────
+    // ── 3. Comment on recent posts (real + bot) ──────────────────────────────
     const postsToComment = await prisma.post.findMany({
       where: {
         publishedAt: { not: null },
-        createdAt: { gte: new Date(Date.now() - 24 * 3600000) },
+        createdAt: { gte: new Date(Date.now() - 3 * 3600000) },
       },
       select: { id: true, authorId: true, content: true },
-      take: 40,
+      take: 15,
     });
 
     for (const post of postsToComment) {
-      if (Math.random() > 0.4) continue;
+      if (Math.random() > 0.35) continue; // 35% of posts get a comment
       const commenter = pick(bots);
       if (commenter.id === post.authorId) continue;
       try {
@@ -144,11 +155,11 @@ export async function GET(req: NextRequest) {
         createdAt: { gte: new Date(Date.now() - 48 * 3600000) },
       },
       select: { id: true, title: true, authorId: true },
-      take: 15,
+      take: 5,
     });
 
     for (const question of unansweredQuestions) {
-      if (Math.random() > 0.7) continue;
+      if (Math.random() > 0.6) continue;
       const answerer = bots.find(b => b.id !== question.authorId);
       if (!answerer) continue;
       try {
