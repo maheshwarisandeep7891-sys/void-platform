@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
   Terminal, Code2, Rocket, Zap, HelpCircle,
-  Eye, Send, Tag, X, Moon, ArrowLeft,
+  Eye, Send, Tag, X, Moon, ArrowLeft, Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
@@ -59,6 +60,7 @@ export default function NewPostPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [charCount, setCharCount] = useState(0);
+  const [images, setImages] = useState<string[]>([]);
 
   const addTag = useCallback(() => {
     const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -91,6 +93,7 @@ export default function NewPostPage() {
           language: postType === "SNIPPET" ? language : undefined,
           tags,
           isDarkMode,
+          images: images.length > 0 ? images : undefined,
         }),
       });
 
@@ -277,6 +280,38 @@ export default function NewPostPage() {
                   suggest: { showKeywords: true },
                 }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* Image upload */}
+        {postType !== "SNIPPET" && (
+          <div className="border-t border-void-border px-5 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ImageIcon className="w-3.5 h-3.5 text-void-muted" />
+              <span className="text-xs font-mono text-void-muted">Images ({images.length}/4)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {images.map((url, i) => (
+                <div key={i} className="relative rounded-lg overflow-hidden border border-void-border aspect-video">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {images.length < 4 && (
+                <ImageUpload
+                  onChange={(url) => setImages(prev => [...prev, url])}
+                  category="posts"
+                  aspectRatio="free"
+                  placeholder="Add image"
+                  className="aspect-video"
+                />
+              )}
             </div>
           </div>
         )}

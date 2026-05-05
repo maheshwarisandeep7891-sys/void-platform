@@ -30,6 +30,20 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Filter by author username
+    const author = searchParams.get("author");
+    if (author) {
+      const authorUser = await prisma.user.findUnique({
+        where: { username: author },
+        select: { id: true },
+      });
+      if (authorUser) {
+        where.authorId = authorUser.id;
+      } else {
+        return NextResponse.json({ questions: [], total: 0, hasMore: false });
+      }
+    }
+
     const orderBy: any =
       sort === "unanswered"
         ? { answers: { _count: "asc" } }

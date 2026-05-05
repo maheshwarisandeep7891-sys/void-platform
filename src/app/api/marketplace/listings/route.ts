@@ -31,6 +31,21 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Filter by seller username
+    const seller = searchParams.get("seller");
+    if (seller) {
+      const sellerUser = await prisma.user.findUnique({
+        where: { username: seller },
+        select: { id: true },
+      });
+      if (sellerUser) {
+        where.sellerId = sellerUser.id;
+        delete where.status; // Show all statuses for seller's own listings
+      } else {
+        return NextResponse.json({ listings: [], total: 0, hasMore: false });
+      }
+    }
+
     const orderBy: any =
       sort === "price_asc"
         ? { price: "asc" }

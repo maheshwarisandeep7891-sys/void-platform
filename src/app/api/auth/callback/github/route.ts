@@ -138,7 +138,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    let isNewUser = false;
+
     if (!dbUser) {
+      isNewUser = true;
       const baseUsername = (githubUser.login || email.split("@")[0])
         .toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20) || "user";
 
@@ -183,11 +186,12 @@ export async function GET(req: NextRequest) {
       reputation: dbUser.reputation,
     });
 
-    const redirectUrl = callbackUrl.startsWith("http")
-      ? callbackUrl
-      : `${base}${callbackUrl}`;
+    // New users go to onboarding, returning users go to their intended destination
+    const finalRedirect = isNewUser
+      ? `${base}/welcome`
+      : (callbackUrl.startsWith("http") ? callbackUrl : `${base}${callbackUrl}`);
 
-    const response = NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(finalRedirect);
     setSessionCookie(response, token);
     response.cookies.delete("void_oauth_state");
     response.cookies.delete("void_oauth_callback");

@@ -273,7 +273,77 @@ export default function TransactionPage() {
             </div>
           </Card>
         )}
+        {/* Review — buyer can leave after completion */}
+        {tx.status === "COMPLETED" && isBuyer && !(tx as any).review && (
+          <ReviewForm transactionId={tx.id} onSubmit={() => {
+            setTx(prev => prev ? { ...prev, review: { id: "done" } as any } : prev);
+          }} />
+        )}
+
+        {(tx as any).review && (
+          <Card className="p-5 border-void-green/20 bg-void-green/5">
+            <div className="flex items-center gap-2 text-void-green text-sm font-mono">
+              <CheckCircle2 className="w-4 h-4" />
+              Review submitted — {(tx as any).review.rating}/5 stars
+            </div>
+            {(tx as any).review.comment && (
+              <p className="text-xs text-void-muted mt-2">{(tx as any).review.comment}</p>
+            )}
+          </Card>
+        )}
       </div>
     </div>
+  );
+}
+
+function ReviewForm({ transactionId, onSubmit }: { transactionId: string; onSubmit: () => void }) {
+  const { toast } = useToast();
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/marketplace/transactions/${transactionId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment: comment || undefined }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      toast({ title: "Review submitted!" });
+      onSubmit();
+    } catch {
+      toast({ title: "Failed to submit review", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="p-5">
+      <h3 className="text-xs font-mono font-bold text-void-muted uppercase tracking-wider mb-3">Leave a Review</h3>
+      <div className="flex gap-1 mb-3">
+        {[1, 2, 3, 4, 5].map(star => (
+          <button
+            key={star}
+            onClick={() => setRating(star)}
+            className={cn("text-2xl transition-transform hover:scale-110", star <= rating ? "text-yellow-400" : "text-void-border")}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comment}
+        onChange={e => setComment(e.target.value)}
+        placeholder="Optional comment..."
+        rows={3}
+        className="w-full bg-void-surface border border-void-border rounded-xl p-3 text-sm font-mono text-void-text placeholder:text-void-muted resize-none outline-none focus:ring-1 focus:ring-void-purple transition-colors mb-3"
+      />
+      <Button onClick={handleSubmit} loading={loading} size="sm" className="font-mono gap-1.5">
+        Submit Review
+      </Button>
+    </Card>
   );
 }

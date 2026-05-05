@@ -39,14 +39,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://void.dev",
+    url: "https://void-platform.vercel.app",
     title: "VOID — Build. Share. Sell.",
     description:
       "The internet's home for people who actually build things. Social network + marketplace + knowledge base for developers.",
     siteName: "VOID",
     images: [
       {
-        url: "/og-image.png",
+        url: "/api/og",
         width: 1200,
         height: 630,
         alt: "VOID Platform",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VOID — Build. Share. Sell.",
     description: "The internet's home for people who actually build things.",
-    images: ["/og-image.png"],
+    images: ["/api/og"],
   },
   robots: {
     index: true,

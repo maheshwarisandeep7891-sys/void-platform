@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { cn, getInitials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,6 +47,8 @@ export default function SettingsPage() {
     openToCollaborate: false,
     openToMentor: false,
     openToTrade: false,
+    image: "",
+    bannerImage: "",
   });
   const [loading, setLoading] = useState(false);
   const [techInput, setTechInput] = useState("");
@@ -66,6 +69,8 @@ export default function SettingsPage() {
           openToCollaborate: data.openToCollaborate ?? false,
           openToMentor: data.openToMentor ?? false,
           openToTrade: data.openToTrade ?? false,
+          image: data.image ?? "",
+          bannerImage: data.bannerImage ?? "",
         });
       })
       .catch(() => {});
@@ -141,16 +146,32 @@ export default function SettingsPage() {
                     {getInitials(user?.name ?? user?.username ?? "?")}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <Button variant="outline" size="sm" className="font-mono gap-1.5">
-                    <Upload className="w-3.5 h-3.5" />
-                    Upload photo
-                  </Button>
-                  <p className="text-xs font-mono text-void-muted mt-1">
-                    JPG, PNG, GIF up to 5MB
-                  </p>
+                <div className="flex-1">
+                  <ImageUpload
+                    value={profile.image}
+                    onChange={(url) => setProfile(p => ({ ...p, image: url }))}
+                    category="avatars"
+                    aspectRatio="square"
+                    placeholder="Upload profile photo"
+                    className="max-w-xs"
+                  />
                 </div>
               </div>
+            </Card>
+
+            {/* Banner */}
+            <Card className="p-6">
+              <h3 className="text-sm font-mono font-bold text-void-text mb-4">
+                Banner Image
+              </h3>
+              <ImageUpload
+                value={profile.bannerImage}
+                onChange={(url) => setProfile(p => ({ ...p, bannerImage: url }))}
+                onRemove={() => setProfile(p => ({ ...p, bannerImage: "" }))}
+                category="banners"
+                aspectRatio="banner"
+                placeholder="Upload banner image"
+              />
             </Card>
 
             {/* Basic info */}

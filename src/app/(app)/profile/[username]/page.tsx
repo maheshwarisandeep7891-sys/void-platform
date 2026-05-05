@@ -27,8 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import {
+import { Card } from "@/components/ui/card";import {
   cn,
   formatDate,
   formatNumber,
@@ -484,17 +483,84 @@ function UserPosts({ username }: { username: string }) {
 }
 
 function UserListings({ username }: { username: string }) {
-  return (
+  const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/marketplace/listings?seller=${username}&page=1`)
+      .then(r => r.json())
+      .then(d => setListings(d.listings ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [username]);
+
+  if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 bg-void-surface rounded-xl animate-pulse" />)}</div>;
+
+  if (listings.length === 0) return (
     <div className="text-center py-12 text-void-muted font-mono text-sm">
-      Listings will appear here.
+      No listings yet.
+      <Link href="/marketplace/new" className="block mt-2 text-void-purple hover:underline text-xs">List something →</Link>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {listings.map((listing: any) => (
+        <Link key={listing.id} href={`/marketplace/${listing.id}`}>
+          <Card hover className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-void-text mb-0.5">{listing.title}</h3>
+                <p className="text-xs text-void-muted">{listing.category} · {listing.type.replace("_", " ")}</p>
+              </div>
+              <div className="text-right">
+                {listing.price && <p className="text-sm font-mono font-bold text-void-green">${listing.price}</p>}
+                <span className={`text-[10px] font-mono ${listing.status === "ACTIVE" ? "text-void-green" : "text-void-muted"}`}>{listing.status}</span>
+              </div>
+            </div>
+          </Card>
+        </Link>
+      ))}
     </div>
   );
 }
 
 function UserKnowledge({ username }: { username: string }) {
-  return (
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/knowledge/questions?author=${username}&page=1`)
+      .then(r => r.json())
+      .then(d => setQuestions(d.questions ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [username]);
+
+  if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 bg-void-surface rounded-xl animate-pulse" />)}</div>;
+
+  if (questions.length === 0) return (
     <div className="text-center py-12 text-void-muted font-mono text-sm">
-      Questions and answers will appear here.
+      No questions yet.
+      <Link href="/knowledge/ask" className="block mt-2 text-void-purple hover:underline text-xs">Ask a question →</Link>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {questions.map((q: any) => (
+        <Link key={q.id} href={`/knowledge/${q.id}`}>
+          <Card hover className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-void-text mb-1 line-clamp-1">{q.title}</h3>
+                <p className="text-xs text-void-muted">{q._count?.answers ?? 0} answers · {q.views ?? 0} views</p>
+              </div>
+              <span className="text-[10px] font-mono text-void-muted ml-4 flex-shrink-0">{formatDate(q.createdAt)}</span>
+            </div>
+          </Card>
+        </Link>
+      ))}
     </div>
   );
 }
