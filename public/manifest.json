@@ -1,0 +1,43 @@
+{
+  "name": "VOID Platform",
+  "short_name": "VOID",
+  "description": "The internet's home for people who actually build things.",
+  "start_url": "/feed",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#a78bfa",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "developer tools", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Feed",
+      "url": "/feed",
+      "description": "View your feed"
+    },
+    {
+      "name": "Post",
+      "url": "/post/new",
+      "description": "Create a new post"
+    },
+    {
+      "name": "Dark Mode",
+      "url": "/dark",
+      "description": "Go anonymous"
+    }
+  ]
+}

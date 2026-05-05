@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn, getInitials, REPUTATION_COLORS } from "@/lib/utils";
+import { SearchModal } from "@/components/search-modal";
 
 const NAV_LINKS = [
   { href: "/feed", label: "Feed", icon: Terminal },
@@ -278,80 +279,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </>
-  );
-}
-
-function SearchModal({ onClose }: { onClose: () => void }) {
-  const [query, setQuery] = useState("");
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-start justify-center pt-20 px-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        className="w-full max-w-2xl bg-void-card border border-void-border rounded-xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 p-4 border-b border-void-border">
-          <Search className="w-5 h-5 text-void-muted flex-shrink-0" />
-          <input
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search posts, tools, people, knowledge..."
-            className="flex-1 bg-transparent text-void-text placeholder:text-void-muted font-mono text-sm outline-none"
-          />
-          <kbd className="text-xs bg-void-surface px-2 py-1 rounded border border-void-border text-void-muted font-mono">
-            ESC
-          </kbd>
-        </div>
-        <div className="p-4">
-          {query.length === 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs font-mono text-void-muted uppercase tracking-wider">
-                Quick links
-              </p>
-              {[
-                { href: "/feed", label: "→ Feed" },
-                { href: "/marketplace", label: "→ Marketplace" },
-                { href: "/knowledge", label: "→ Knowledge Base" },
-                { href: "/bounties", label: "→ Open Bounties" },
-              ].map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={onClose}
-                  className="block px-3 py-2 rounded-lg text-sm font-mono text-void-muted hover:text-void-text hover:bg-void-surface transition-colors"
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-void-muted font-mono text-sm">
-              <p>Searching for &quot;{query}&quot;...</p>
-              <p className="text-xs mt-2 text-void-muted/50">
-                Full search powered by Meilisearch
-              </p>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }

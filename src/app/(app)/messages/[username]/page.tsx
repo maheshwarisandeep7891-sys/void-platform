@@ -44,10 +44,28 @@ export default function DMThreadPage() {
       .finally(() => setLoading(false));
   }, [username]);
 
+  // Poll for new messages every 5 seconds
+  useEffect(() => {
+    if (loading) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/messages/${username}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const newMsgs = (data.messages ?? []).filter((m: Message) => !existingIds.has(m.id));
+          if (newMsgs.length === 0) return prev;
+          return [...prev, ...newMsgs];
+        });
+      } catch {}
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [username, loading]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
   const sendMessage = async () => {
     if (!content.trim()) return;
     setSending(true);

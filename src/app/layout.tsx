@@ -17,6 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://void-platform.vercel.app"),
   title: {
     default: "VOID — The internet's home for people who actually build things.",
     template: "%s | VOID",
