@@ -9,11 +9,16 @@ const prisma = new PrismaClient();
 const TECH_TAGS = ["rust", "typescript", "go", "python", "kubernetes", "webassembly", "llm", "zig", "elixir", "htmx"];
 
 const SAMPLE_USERS = [
-  { username: "rustacean", name: "Ferris Crab", bio: "Writing memory-safe code since 2015. Rust evangelist.", techStack: ["Rust", "WebAssembly", "C++"], githubUrl: "https://github.com/rustacean" },
-  { username: "gopher_dev", name: "Go Developer", bio: "Building distributed systems. K8s contributor.", techStack: ["Go", "Kubernetes", "gRPC"], githubUrl: "https://github.com/gopher_dev" },
-  { username: "ml_hacker", name: "ML Hacker", bio: "Training models, breaking things. CUDA wizard.", techStack: ["Python", "CUDA", "PyTorch"], githubUrl: "https://github.com/ml_hacker" },
-  { username: "ts_wizard", name: "TypeScript Wizard", bio: "Type-safe everything. Next.js core contributor.", techStack: ["TypeScript", "React", "Next.js"], githubUrl: "https://github.com/ts_wizard" },
-  { username: "devops_ninja", name: "DevOps Ninja", bio: "Kubernetes, Terraform, and coffee. SRE at scale.", techStack: ["Kubernetes", "Terraform", "AWS"], githubUrl: "https://github.com/devops_ninja" },
+  { username: "rustacean", name: "Ferris Crab", bio: "Writing memory-safe code since 2015. Rust evangelist.", techStack: ["Rust", "WebAssembly", "C++"], githubUrl: "https://github.com/rustacean", repScore: 4200, repLevel: "ARCHITECT" },
+  { username: "gopher_dev", name: "Go Developer", bio: "Building distributed systems. K8s contributor.", techStack: ["Go", "Kubernetes", "gRPC"], githubUrl: "https://github.com/gopher_dev", repScore: 2800, repLevel: "ARCHITECT" },
+  { username: "ml_hacker", name: "ML Hacker", bio: "Training models, breaking things. CUDA wizard.", techStack: ["Python", "CUDA", "PyTorch"], githubUrl: "https://github.com/ml_hacker", repScore: 1200, repLevel: "HACKER" },
+  { username: "ts_wizard", name: "TypeScript Wizard", bio: "Type-safe everything. Next.js core contributor.", techStack: ["TypeScript", "React", "Next.js"], githubUrl: "https://github.com/ts_wizard", repScore: 890, repLevel: "HACKER" },
+  { username: "devops_ninja", name: "DevOps Ninja", bio: "Kubernetes, Terraform, and coffee. SRE at scale.", techStack: ["Kubernetes", "Terraform", "AWS"], githubUrl: "https://github.com/devops_ninja", repScore: 650, repLevel: "HACKER" },
+  { username: "zig_builder", name: "Zig Builder", bio: "Comptime everything. Building the future of systems programming.", techStack: ["Zig", "C", "LLVM"], githubUrl: "https://github.com/zig_builder", repScore: 420, repLevel: "BUILDER" },
+  { username: "elixir_alchemist", name: "Elixir Alchemist", bio: "OTP, GenServers, and distributed Erlang. Phoenix contributor.", techStack: ["Elixir", "Erlang", "Phoenix"], githubUrl: "https://github.com/elixir_alchemist", repScore: 380, repLevel: "BUILDER" },
+  { username: "wasm_pioneer", name: "WASM Pioneer", bio: "WebAssembly everywhere. WASI contributor.", techStack: ["WebAssembly", "Rust", "C++"], githubUrl: "https://github.com/wasm_pioneer", repScore: 290, repLevel: "BUILDER" },
+  { username: "db_architect", name: "DB Architect", bio: "PostgreSQL internals, query optimization, and distributed databases.", techStack: ["PostgreSQL", "Redis", "ClickHouse"], githubUrl: "https://github.com/db_architect", repScore: 11500, repLevel: "LEGEND" },
+  { username: "kernel_hacker", name: "Kernel Hacker", bio: "Linux kernel contributor. eBPF, networking, and storage.", techStack: ["C", "Linux", "eBPF"], githubUrl: "https://github.com/kernel_hacker", repScore: 8900, repLevel: "LEGEND" },
 ];
 
 const SAMPLE_POSTS = [
@@ -254,16 +259,17 @@ async function main() {
         githubUrl: userData.githubUrl,
         openToCollaborate: true,
         openToHire: Math.random() > 0.5,
+        openToMentor: Math.random() > 0.6,
         reputation: {
           create: {
-            score: Math.floor(Math.random() * 3000) + 100,
-            level: ["NEWCOMER", "BUILDER", "HACKER", "ARCHITECT"][Math.floor(Math.random() * 4)] as any,
+            score: userData.repScore,
+            level: userData.repLevel as any,
           },
         },
       },
     });
     createdUsers.push(user);
-    console.log(`  ✓ User: @${user.username}`);
+    console.log(`  ✓ User: @${user.username} (${userData.repLevel})`);
   }
 
   // Create tags
@@ -355,6 +361,109 @@ async function main() {
     });
     console.log(`  ✓ Guild: ${guildData.name}`);
   }
+
+  // Create follows between users
+  for (let i = 0; i < createdUsers.length; i++) {
+    for (let j = 0; j < createdUsers.length; j++) {
+      if (i !== j && Math.random() > 0.5) {
+        await prisma.follow.create({
+          data: {
+            followerId: createdUsers[i].id,
+            followingId: createdUsers[j].id,
+          },
+        }).catch(() => {});
+      }
+    }
+  }
+
+  // Create knowledge questions and answers
+  const SAMPLE_QUESTIONS = [
+    {
+      title: "How do you handle distributed transactions without 2PC?",
+      content: `We're building a marketplace where a purchase needs to:\n1. Debit buyer's balance\n2. Credit seller's balance\n3. Update inventory\n4. Send notifications\n\nAll across different services. 2PC is too slow and fragile. What patterns are you using in production?`,
+      tags: ["distributed-systems", "transactions", "architecture"],
+      answers: [
+        { content: "Use the Saga pattern with compensating transactions. Each step publishes an event, and if any step fails, you run compensating transactions in reverse order. Tools like Temporal make this much easier to implement correctly.", accepted: true },
+        { content: "Outbox pattern + eventual consistency. Write to a local outbox table in the same transaction as your business logic, then a background worker publishes those events. This gives you at-least-once delivery without 2PC." },
+      ],
+    },
+    {
+      title: "Rust async: when to use tokio::spawn vs async blocks?",
+      content: "I keep seeing both patterns in Rust async code and I'm not sure when to use which. What's the mental model for choosing between them?",
+      tags: ["rust", "async", "tokio"],
+      answers: [
+        { content: "Use `tokio::spawn` when you want the task to run concurrently and independently — it gets its own stack and can outlive the current scope. Use async blocks (`.await`) when you want sequential execution or need to share references with the current scope. The key difference: spawned tasks must be `'static + Send`.", accepted: true },
+        { content: "Think of `tokio::spawn` like `thread::spawn` — it's a new concurrent unit of work. Async blocks are just futures that you drive from the current task. If you need fire-and-forget, spawn. If you need the result inline, await." },
+      ],
+    },
+    {
+      title: "PostgreSQL: JSONB vs separate columns for semi-structured data?",
+      content: "We have user metadata that varies by user type. Some fields are common, others are type-specific. Should we use JSONB or separate tables with nullable columns?",
+      tags: ["postgresql", "database", "schema-design"],
+      answers: [
+        { content: "Separate tables with a polymorphic association pattern is almost always better for queryability and indexing. JSONB is great for truly dynamic data you don't query on, but if you're filtering/sorting by those fields, you'll regret JSONB at scale. The GIN index on JSONB is powerful but not as fast as a B-tree on a typed column.", accepted: false },
+        { content: "JSONB with generated columns is a good middle ground. Store in JSONB, create generated columns for frequently-queried fields: `ALTER TABLE users ADD COLUMN user_type TEXT GENERATED ALWAYS AS (metadata->>'type') STORED;` Then index the generated column normally.", accepted: true },
+      ],
+    },
+  ];
+
+  for (const qData of SAMPLE_QUESTIONS) {
+    const author = createdUsers[Math.floor(Math.random() * createdUsers.length)];
+    const tagConnections = qData.tags
+      .filter(t => tagMap.has(t))
+      .map(t => ({ tagId: tagMap.get(t)! }));
+
+    const question = await prisma.question.create({
+      data: {
+        title: qData.title,
+        content: qData.content,
+        authorId: author.id,
+        views: Math.floor(Math.random() * 500) + 50,
+        tags: { create: tagConnections },
+      },
+    });
+
+    for (const ansData of qData.answers) {
+      const answerAuthor = createdUsers.find(u => u.id !== author.id) ?? createdUsers[0];
+      await prisma.answer.create({
+        data: {
+          content: ansData.content,
+          questionId: question.id,
+          authorId: answerAuthor.id,
+          isAccepted: ansData.accepted,
+        },
+      });
+    }
+    console.log(`  ✓ Question: ${qData.title.slice(0, 50)}`);
+  }
+
+  // Add guild memberships for more users
+  const guilds = await prisma.guild.findMany({ select: { id: true, slug: true } });
+  for (const guild of guilds) {
+    for (const user of createdUsers.slice(1, 4)) {
+      await prisma.guildMember.create({
+        data: { guildId: guild.id, userId: user.id, role: "MEMBER" },
+      }).catch(() => {});
+    }
+  }
+
+  // Create a hackathon room
+  await prisma.hackathonRoom.create({
+    data: {
+      name: "48h CLI Tool Challenge",
+      description: "Build a useful CLI tool in 48 hours. Any language, any problem.",
+      startAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // started 2h ago
+      endAt: new Date(Date.now() + 46 * 60 * 60 * 1000),  // ends in 46h
+      isActive: true,
+      members: {
+        create: createdUsers.slice(0, 3).map((u, i) => ({
+          userId: u.id,
+          role: i === 0 ? "LEAD" : "MEMBER",
+        })),
+      },
+    },
+  });
+  console.log("  ✓ Hackathon room created");
 
   // Create follows between users
   for (let i = 0; i < createdUsers.length; i++) {

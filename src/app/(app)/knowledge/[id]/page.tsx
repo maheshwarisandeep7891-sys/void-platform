@@ -495,6 +495,11 @@ function AnswerCard({
             <span className="text-[10px] font-mono text-void-muted ml-auto">
               {formatDate(answer.createdAt)}
             </span>
+            {answer.stillWorksAt && (
+              <span className="text-[9px] font-mono text-void-green flex items-center gap-1">
+                ✓ Still works · {formatDate(answer.stillWorksAt)}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -147,12 +147,12 @@ export default function CLIPage() {
         <p className="text-xs font-mono text-void-muted">
           Open source · MIT License ·{" "}
           <a
-            href="https://GitBranch.com/void-platform/void-cli"
+            href="https://github.com/void-platform/void-cli"
             target="_blank"
             rel="noopener noreferrer"
             className="text-void-purple hover:underline"
           >
-            GitBranch.com/void-platform/void-cli
+            github.com/void-platform/void-cli
           </a>
         </p>
       </div>

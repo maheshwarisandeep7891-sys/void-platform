@@ -374,15 +374,16 @@ export default function SettingsPage() {
         <TabsContent value="billing">
           <Card className="p-6">
             <h3 className="text-sm font-mono font-bold text-void-text mb-2">
-              Seller Account
+              Seller Dashboard
             </h3>
             <p className="text-sm text-void-muted mb-4">
-              Set up Stripe Connect to sell on the marketplace and receive payouts.
+              Manage your listings, track earnings, and view transaction history.
+              VOID uses internal escrow — no external payment setup required.
             </p>
             <Button asChild className="font-mono gap-1.5">
               <a href="/settings/seller">
                 <CreditCard className="w-3.5 h-3.5" />
-                Set up seller account
+                Open Seller Dashboard
               </a>
             </Button>
           </Card>

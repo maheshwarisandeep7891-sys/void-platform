@@ -1,8 +1,18 @@
 "use client";
 
 import React from "react";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
-// No NextAuth SessionProvider needed — we use our own session hook
+function KeyboardShortcutsProvider() {
+  useKeyboardShortcuts();
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <KeyboardShortcutsProvider />
+      {children}
+    </>
+  );
 }
