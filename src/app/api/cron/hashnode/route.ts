@@ -308,38 +308,11 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Get publication ID
-    const meData = await hashnodeQuery(`{
-      me {
-        id
-        username
-        publications(first: 1) {
-          edges { node { id title } }
-        }
-      }
-    }`);
-
-    let publicationId = meData?.data?.me?.publications?.edges?.[0]?.node?.id;
-
-    // If no publication exists, create one
-    if (!publicationId) {
-      const createPub = await hashnodeQuery(`
-        mutation CreatePublication($input: CreatePublicationInput!) {
-          createPublication(input: $input) {
-            publication { id title url }
-          }
-        }
-      `, {
-        input: {
-          title: "VOID — Developer Platform",
-          url: "void-platform",
-        },
-      });
-      publicationId = createPub?.data?.createPublication?.publication?.id;
-    }
+    // Get publication ID — use stored env var directly
+    const publicationId = process.env.HASHNODE_PUBLICATION_ID || "69fb536b5724b606b7d3d77f";
 
     if (!publicationId) {
-      return NextResponse.json({ error: "Could not get or create publication" });
+      return NextResponse.json({ error: "No publication ID" });
     }
 
     // Get article index based on how many we've posted
