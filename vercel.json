@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/twitter",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/devto",
+      "schedule": "0 10 * * 1"
     }
   ]
 }
