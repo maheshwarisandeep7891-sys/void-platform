@@ -15,6 +15,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/leaderboard`, lastModified: new Date(), changeFrequency: "daily", priority: 0.7 },
     { url: `${base}/explore`, lastModified: new Date(), changeFrequency: "hourly", priority: 0.8 },
     { url: `${base}/dark`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+    // SEO landing pages — pure server-rendered, no JS required
+    { url: `${base}/about/feed`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/about/marketplace`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/about/bounties`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/about/knowledge`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/about/dark`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
   ];
 
   try {
