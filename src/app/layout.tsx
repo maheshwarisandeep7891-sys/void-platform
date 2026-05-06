@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     images: ["/api/og"],
   },
   verification: {
-    google: "bb5190fe79d7b552",
+    google: ["bb5190fe79d7b552", "1B2mGO_qsXe3vHGAZlRME_C2AiHPGPG9wsuTSE3TauA"],
   },
   robots: {
     index: true,
