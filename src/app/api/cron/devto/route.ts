@@ -181,11 +181,105 @@ Free. GitHub login. 30 seconds.
 
 I'd genuinely love feedback from the dev.to community — you're exactly the people I built this for.`,
     },
+    {
+      title: "Why I built a reputation system that you can export to your resume",
+      tags: ["career", "programming", "webdev", "discuss"],
+      body: `## The problem with developer credentials
+
+Your GitHub profile shows your code. Your LinkedIn shows your job titles. But neither shows your actual contribution to the developer community.
+
+Stack Overflow reputation is the closest thing — but it's locked inside Stack Overflow.
+
+## VOID reputation is portable
+
+On VOID, every contribution earns points:
+- Post a code snippet → +1 pt
+- Someone reacts to your post → +2 pts
+- Your answer gets accepted → +25 pts
+- Complete a bounty → +50 pts
+
+You level up: **NEWCOMER → BUILDER → HACKER → ARCHITECT → LEGEND**
+
+The best part: you can export it as a **signed JSON credential**:
+
+\`\`\`json
+{
+  "@context": "https://void.dev/credentials/v1",
+  "type": "VoidReputationCredential",
+  "credentialSubject": {
+    "username": "your_handle",
+    "score": 2847,
+    "level": "ARCHITECT",
+    "memberSince": "2026-01-01"
+  }
+}
+\`\`\`
+
+Put it on your resume. Link it from your GitHub. It's verifiable proof of your developer contributions.
+
+## Current leaderboard
+
+${stats.users} developers are building reputation on VOID right now.
+
+Top levels:
+- 🏆 LEGEND: 10,000+ pts
+- 🔮 ARCHITECT: 2,000+ pts  
+- 💻 HACKER: 500+ pts
+- 🔨 BUILDER: 100+ pts
+
+## Join free
+
+👉 **https://void-platform.vercel.app**
+
+GitHub login. Start earning reputation immediately.`,
+    },
+    {
+      title: "I added anonymous posting to my developer platform — here's why",
+      tags: ["webdev", "programming", "discuss", "community"],
+      body: `## The problem nobody talks about
+
+Developers are afraid to ask questions publicly.
+
+Not because they're bad developers. Because the internet is brutal. One "dumb" question on Stack Overflow and you get downvoted, closed, and mocked.
+
+So developers stay stuck. They spend hours on a problem they could solve in minutes if they just asked.
+
+## Dark Mode — anonymous posting for developers
+
+I built a feature called Dark Mode on VOID. One click:
+
+\`\`\`
+🖤 Dark mode enabled — you are ghost_0x7f
+Your identity is completely hidden
+\`\`\`
+
+You get a random handle. No link to your real account. Ever. The platform stores no connection between your identity and your dark mode sessions.
+
+**What people use it for:**
+- Asking "beginner" questions without reputation damage
+- Posting controversial technical opinions
+- Sharing embarrassing debugging stories
+- Asking for salary advice
+
+## The reaction
+
+Since launching Dark Mode, it's become the most-used feature on VOID. Turns out developers have a lot they want to say anonymously.
+
+Some of the best technical discussions on the platform happen in Dark Mode.
+
+## Try it
+
+👉 **https://void-platform.vercel.app/dark**
+
+One click. Zero identity. Ask anything.
+
+Currently ${stats.users} developers on the platform, ${stats.posts} posts published.`,
+    },
   ];
 
-  // Rotate based on day of week
-  const dayOfWeek = new Date().getDay();
-  return templates[dayOfWeek % templates.length];
+  // Rotate based on day of month for more variety
+  const dayOfMonth = new Date().getDate();
+  return templates[dayOfMonth % templates.length];
 }
 
 export async function GET(req: NextRequest) {
@@ -227,21 +321,21 @@ export async function GET(req: NextRequest) {
       topQuestion
     );
 
-    // Check if we already posted this week (avoid duplicate articles)
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 3600000);
+    // Check if we already posted in last 3 days (avoid spam ban)
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
     const recentPost = await prisma.notification.findFirst({
       where: {
         type: "SYSTEM",
         title: "devto_last_post",
-        createdAt: { gte: oneWeekAgo },
+        createdAt: { gte: threeDaysAgo },
       },
     });
 
     if (recentPost) {
       return NextResponse.json({
         success: false,
-        message: "Already posted this week",
-        nextPost: new Date(recentPost.createdAt.getTime() + 7 * 24 * 3600000).toISOString(),
+        message: "Already posted in last 3 days — protecting account from spam ban",
+        nextPost: new Date(recentPost.createdAt.getTime() + 3 * 24 * 3600000).toISOString(),
       });
     }
 
