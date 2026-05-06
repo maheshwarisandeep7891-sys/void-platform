@@ -154,9 +154,9 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-void-bg overflow-hidden">
+    <div className="min-h-screen bg-void-bg overflow-hidden mesh-bg">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(5,5,8,0.8)] backdrop-blur-2xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(255,255,255,0.05)] frosted">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <VoidLogo size={32} variant="full" />
@@ -165,7 +165,7 @@ export default function LandingPage() {
                 <Button variant="ghost" size="sm" className="font-mono">Sign in</Button>
               </Link>
               <Link href="/auth/signin">
-                <Button size="sm" variant="gradient" className="font-mono gap-1.5">
+                <Button size="sm" variant="gradient" className="font-mono gap-1.5 ripple">
                   Join VOID
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
@@ -176,11 +176,14 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center grid-bg pt-14">
-        {/* Premium gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-void-purple/8 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-void-cyan/6 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-void-purple/4 rounded-full blur-[150px] pointer-events-none" />
+      <section className="relative min-h-screen flex items-center justify-center pt-14 particle-bg">
+        {/* Premium layered orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-void-purple/10 rounded-full blur-[140px]" style={{ animation: "pulse 4s ease-in-out infinite" }} />
+          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-void-cyan/8 rounded-full blur-[120px]" style={{ animation: "pulse 6s ease-in-out infinite", animationDelay: "2s" }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-void-purple/5 rounded-full blur-[180px]" />
+          <div className="absolute inset-0 grid-bg opacity-40" />
+        </div>
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
@@ -213,11 +216,11 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-none"
           >
-            <span className="text-void-text">The internet&apos;s home</span>
+            <span className="text-premium">The internet&apos;s home</span>
             <br />
-            <span className="text-gradient-purple">for people who</span>
+            <span className="text-gradient-aurora">for people who</span>
             <br />
-            <span className="text-void-text">actually build things.</span>
+            <span className="text-premium">actually build things.</span>
           </motion.h1>
 
           {/* Subheadline */}
