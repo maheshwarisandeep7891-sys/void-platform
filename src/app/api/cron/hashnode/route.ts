@@ -228,7 +228,7 @@ I built a knowledge base that fixes these problems:
 
 ## Current stats
 
-${stats.questions ?? 6} questions answered so far, with more every day.
+${stats.bounties} questions answered so far, with more every day.
 
 ## Try it
 
