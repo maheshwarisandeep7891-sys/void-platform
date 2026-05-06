@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Knowledge Base — Developer Q&A | VOID",
-  description: "Stack Overflow done right. Ask questions, get answers, vote on quality. Anonymous questions supported. Answers verified by the community.",
+  title: "Developer Knowledge Base — Q&A for Programmers | VOID",
+  description: "Stack Overflow done right. Ask programming questions, get expert answers, vote on quality. Anonymous questions supported. Answers verified by the community.",
   openGraph: {
     title: "VOID Knowledge Base — Developer Q&A",
     description: "Stack Overflow done right. Ask questions, get answers, vote on quality. Anonymous questions supported.",
@@ -15,5 +15,32 @@ export const metadata: Metadata = {
 };
 
 export default function KnowledgeLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <div className="sr-only">
+        <h1>VOID Developer Knowledge Base</h1>
+        <p>Stack Overflow done right. Ask programming questions and get expert answers from the developer community.</p>
+        <h2>Features of VOID Knowledge Base</h2>
+        <ul>
+          <li>Ask questions anonymously — no reputation damage for beginner questions</li>
+          <li>Vote on answers — upvote helpful answers, downvote incorrect ones</li>
+          <li>Accept answers — mark the best answer as accepted</li>
+          <li>Still works button — community verifies answers are still current</li>
+          <li>Markdown support — format code, lists, and explanations</li>
+          <li>Tag system — organize questions by technology</li>
+        </ul>
+        <h2>Popular topics on VOID Knowledge Base</h2>
+        <ul>
+          <li>Rust async programming and lifetimes</li>
+          <li>Go concurrency patterns and goroutines</li>
+          <li>TypeScript type system and generics</li>
+          <li>PostgreSQL query optimization and indexing</li>
+          <li>Kubernetes deployment and configuration</li>
+          <li>Python async/await and FastAPI</li>
+          <li>Distributed systems and microservices</li>
+        </ul>
+      </div>
+      {children}
+    </>
+  );
 }
