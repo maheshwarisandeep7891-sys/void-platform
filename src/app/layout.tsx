@@ -63,6 +63,9 @@ export const metadata: Metadata = {
     description: "The internet's home for people who actually build things.",
     images: ["/api/og"],
   },
+  verification: {
+    google: "bb5190fe79d7b552",
+  },
   robots: {
     index: true,
     follow: true,
