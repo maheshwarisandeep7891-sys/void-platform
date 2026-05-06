@@ -1,20 +1,8 @@
 {
   "crons": [
-    {
-      "path": "/api/cron/dead-mans-switch",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/bot-activity",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/twitter",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/devto",
-      "schedule": "0 10 * * 1,4"
-    }
+    { "path": "/api/cron/dead-mans-switch", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/bot-activity",     "schedule": "0 6 * * *" },
+    { "path": "/api/cron/twitter",          "schedule": "0 9 * * *" },
+    { "path": "/api/cron/hashnode",         "schedule": "0 10 * * 1,4" }
   ]
 }
