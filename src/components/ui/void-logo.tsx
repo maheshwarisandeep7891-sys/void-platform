@@ -8,21 +8,19 @@ interface VoidLogoProps {
   animated?: boolean;
 }
 
-/**
- * VOID Platform Logo
- * Custom SVG — a stylized void/portal symbol with the wordmark
- */
 export function VoidLogo({ size = 32, className, variant = "icon", animated = false }: VoidLogoProps) {
   if (variant === "wordmark") {
     return (
       <span
-        className={cn(
-          "font-black tracking-tighter font-mono select-none",
-          "bg-gradient-to-r from-[#a78bfa] via-[#8b5cf6] to-[#6366f1]",
-          "bg-clip-text text-transparent",
-          className
-        )}
-        style={{ fontSize: size }}
+        className={cn("font-black tracking-tighter font-mono select-none", className)}
+        style={{
+          fontSize: size,
+          background: "linear-gradient(135deg, #c4b5fd 0%, #a78bfa 40%, #818cf8 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          letterSpacing: "-0.05em",
+        }}
       >
         VOID
       </span>
@@ -31,11 +29,18 @@ export function VoidLogo({ size = 32, className, variant = "icon", animated = fa
 
   if (variant === "full") {
     return (
-      <div className={cn("flex items-center gap-2.5 select-none", className)}>
+      <div className={cn("flex items-center gap-3 select-none", className)}>
         <VoidIcon size={size} animated={animated} />
         <span
-          className="font-black tracking-tighter font-mono text-void-text"
-          style={{ fontSize: size * 0.75 }}
+          className="font-black font-mono tracking-tighter"
+          style={{
+            fontSize: size * 0.8,
+            background: "linear-gradient(135deg, #e2e8f0 0%, #c4b5fd 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "-0.05em",
+          }}
         >
           VOID
         </span>
@@ -47,65 +52,84 @@ export function VoidLogo({ size = 32, className, variant = "icon", animated = fa
 }
 
 function VoidIcon({ size = 32, animated = false, className }: { size?: number; animated?: boolean; className?: string }) {
+  const id = `void-${Math.random().toString(36).slice(2, 7)}`;
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn(animated && "animate-pulse-glow", className)}
+      style={{ filter: "drop-shadow(0 0 8px rgba(139,92,246,0.4))" }}
     >
       <defs>
-        <linearGradient id="void-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a78bfa" />
+        <linearGradient id={`${id}-g1`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#c4b5fd" />
           <stop offset="50%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
-        <linearGradient id="void-grad-2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.4" />
+        <linearGradient id={`${id}-g2`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.6" />
         </linearGradient>
-        <radialGradient id="void-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+        <linearGradient id={`${id}-g3`} x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#0f0f18" />
+          <stop offset="100%" stopColor="#1a1a2e" />
+        </linearGradient>
+        <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
         </radialGradient>
-        <filter id="void-blur">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        <filter id={`${id}-shadow`}>
+          <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#8b5cf6" floodOpacity="0.5" />
         </filter>
       </defs>
 
-      {/* Outer glow */}
-      <circle cx="20" cy="20" r="19" fill="url(#void-glow)" />
+      {/* Outer glow circle */}
+      <circle cx="24" cy="24" r="23" fill={`url(#${id}-glow)`} />
 
-      {/* Background square with rounded corners */}
-      <rect x="2" y="2" width="36" height="36" rx="10" fill="#0f0f18" />
-      <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#void-grad-1)" fillOpacity="0.12" />
-      <rect x="2" y="2" width="36" height="36" rx="10" stroke="url(#void-grad-1)" strokeWidth="1" strokeOpacity="0.5" />
+      {/* Main background */}
+      <rect x="1" y="1" width="46" height="46" rx="14" fill={`url(#${id}-g3)`} />
 
-      {/* Inner portal rings */}
-      <circle cx="20" cy="20" r="12" stroke="url(#void-grad-1)" strokeWidth="1.5" strokeOpacity="0.4" fill="none" />
-      <circle cx="20" cy="20" r="8" stroke="url(#void-grad-2)" strokeWidth="1" strokeOpacity="0.6" fill="none" />
+      {/* Gradient overlay */}
+      <rect x="1" y="1" width="46" height="46" rx="14" fill={`url(#${id}-g1)`} fillOpacity="0.08" />
 
-      {/* V shape — the core VOID symbol */}
+      {/* Border */}
+      <rect x="1" y="1" width="46" height="46" rx="14" stroke={`url(#${id}-g1)`} strokeWidth="1.5" strokeOpacity="0.6" />
+
+      {/* Outer ring */}
+      <circle cx="24" cy="24" r="16" stroke={`url(#${id}-g1)`} strokeWidth="1" strokeOpacity="0.3" fill="none" strokeDasharray="3 2" />
+
+      {/* Middle ring */}
+      <circle cx="24" cy="24" r="11" stroke={`url(#${id}-g2)`} strokeWidth="1.5" strokeOpacity="0.5" fill="none" />
+
+      {/* Inner ring */}
+      <circle cx="24" cy="24" r="6" stroke={`url(#${id}-g1)`} strokeWidth="1" strokeOpacity="0.4" fill="none" />
+
+      {/* V shape - main symbol */}
       <path
-        d="M12 13 L20 27 L28 13"
-        stroke="url(#void-grad-1)"
-        strokeWidth="2.5"
+        d="M14 15 L24 33 L34 15"
+        stroke={`url(#${id}-g1)`}
+        strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
+        filter={`url(#${id}-shadow)`}
       />
 
-      {/* Center dot */}
-      <circle cx="20" cy="20" r="2" fill="url(#void-grad-1)" />
+      {/* Center glow dot */}
+      <circle cx="24" cy="24" r="2.5" fill={`url(#${id}-g1)`} opacity="0.9" />
+      <circle cx="24" cy="24" r="1.5" fill="white" opacity="0.6" />
 
-      {/* Corner accents */}
-      <circle cx="8" cy="8" r="1.5" fill="#8b5cf6" fillOpacity="0.5" />
-      <circle cx="32" cy="8" r="1.5" fill="#06b6d4" fillOpacity="0.5" />
-      <circle cx="8" cy="32" r="1.5" fill="#06b6d4" fillOpacity="0.3" />
-      <circle cx="32" cy="32" r="1.5" fill="#8b5cf6" fillOpacity="0.3" />
+      {/* Corner accent dots */}
+      <circle cx="9" cy="9" r="1.5" fill="#a78bfa" opacity="0.6" />
+      <circle cx="39" cy="9" r="1.5" fill="#38bdf8" opacity="0.6" />
+      <circle cx="9" cy="39" r="1.5" fill="#38bdf8" opacity="0.4" />
+      <circle cx="39" cy="39" r="1.5" fill="#a78bfa" opacity="0.4" />
+
+      {/* Top highlight */}
+      <rect x="8" y="1" width="32" height="1" rx="0.5" fill="white" fillOpacity="0.08" />
     </svg>
   );
 }
