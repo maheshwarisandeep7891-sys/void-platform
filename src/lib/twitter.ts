@@ -87,8 +87,7 @@ export async function postTweet(text: string): Promise<{ id: string; text: strin
     if (!res.ok) {
       const err = await res.text();
       console.error("Twitter API error:", res.status, err);
-      // Return error details for debugging
-      return { error: `${res.status}: ${err}` } as any;
+      return null;
     }
 
     const data = await res.json();
