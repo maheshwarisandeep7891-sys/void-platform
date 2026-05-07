@@ -294,17 +294,17 @@ export async function GET(req: NextRequest) {
       prisma.bounty.count({ where: { status: "OPEN" } }),
     ]);
 
-    // Check last post (3 day cooldown)
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
+    // Check last post (1 day cooldown)
+    const oneDayAgo = new Date(Date.now() - 24 * 3600000);
     const recentPost = await prisma.notification.findFirst({
-      where: { type: "SYSTEM", title: "hashnode_last_post", createdAt: { gte: threeDaysAgo } },
+      where: { type: "SYSTEM", title: "hashnode_last_post", createdAt: { gte: oneDayAgo } },
     });
 
     if (recentPost) {
       return NextResponse.json({
         success: false,
-        message: "Already posted in last 3 days",
-        nextPost: new Date(recentPost.createdAt.getTime() + 3 * 24 * 3600000).toISOString(),
+        message: "Already posted today",
+        nextPost: new Date(recentPost.createdAt.getTime() + 24 * 3600000).toISOString(),
       });
     }
 
