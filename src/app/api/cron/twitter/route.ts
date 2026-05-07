@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: !!result,
-      tweetId: result?.id,
+      tweetId: (result as any)?.id,
       type: nextType,
       preview: tweetText.slice(0, 100) + "...",
     });
