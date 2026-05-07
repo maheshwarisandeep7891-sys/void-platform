@@ -96,13 +96,28 @@ export function Sidebar() {
 
       {/* CLI promo */}
       <div className="p-3 border-t border-[rgba(255,255,255,0.05)]">
-        <Link href="/cli" className="block p-3 rounded-xl bg-gradient-to-br from-void-purple/8 to-void-cyan/4 border border-void-purple/15 hover:border-void-purple/30 transition-all duration-150 group">
+        <Link href="/cli" className="block p-3 rounded-xl bg-gradient-to-br from-void-purple/8 to-void-cyan/4 border border-void-purple/15 hover:border-void-purple/30 transition-all duration-150 group mb-2">
           <div className="flex items-center gap-2 mb-1">
             <Code2 className="w-3.5 h-3.5 text-void-purple" />
             <span className="text-xs font-mono font-bold text-void-text">void CLI</span>
           </div>
           <p className="text-[10px] font-mono text-void-muted">npm install -g void-cli</p>
         </Link>
+        {/* Telegram */}
+        <a
+          href="https://t.me/void_developers"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 p-2.5 rounded-xl bg-void-surface/50 border border-void-border hover:border-[#229ED9]/30 hover:bg-[#229ED9]/5 transition-all duration-150"
+        >
+          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="#229ED9">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.012 9.486c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.48 14.697l-2.95-.924c-.642-.2-.654-.642.136-.953l11.527-4.445c.535-.194 1.003.131.37.873z"/>
+          </svg>
+          <div>
+            <p className="text-[10px] font-mono font-bold text-void-text">Join Telegram</p>
+            <p className="text-[9px] font-mono text-void-muted">@void_developers</p>
+          </div>
+        </a>
       </div>
     </aside>
   );
