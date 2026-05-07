@@ -83,6 +83,11 @@ export const metadata: Metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
+  alternates: {
+    types: {
+      "application/rss+xml": "https://void-platform.vercel.app/feed.xml",
+    },
+  },
 };
 
 export const viewport: Viewport = {
@@ -108,6 +113,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Premium font: Geist for headings */}
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="alternate" type="application/rss+xml" title="VOID Developer Feed" href="https://void-platform.vercel.app/feed.xml" />
       </head>
       <body className="bg-void-bg text-void-text antialiased bg-gradient-void">
         <Providers>
