@@ -11,6 +11,27 @@ const URLS_TO_INDEX = [
   "https://void-platform.vercel.app/about/knowledge",
   "https://void-platform.vercel.app/about/dark",
   "https://void-platform.vercel.app/auth/signin",
+  // New SEO landing pages
+  "https://void-platform.vercel.app/about/rust-developer-community",
+  "https://void-platform.vercel.app/about/buy-api-credits",
+  "https://void-platform.vercel.app/about/sell-saas-seats",
+  "https://void-platform.vercel.app/about/developer-bounties",
+  "https://void-platform.vercel.app/about/anonymous-developer-forum",
+  "https://void-platform.vercel.app/about/go-developer-community",
+  "https://void-platform.vercel.app/about/typescript-developers",
+  "https://void-platform.vercel.app/about/python-developer-community",
+  "https://void-platform.vercel.app/about/kubernetes-community",
+  "https://void-platform.vercel.app/about/developer-marketplace",
+  "https://void-platform.vercel.app/about/sell-gpu-access",
+  "https://void-platform.vercel.app/about/developer-reputation-system",
+  "https://void-platform.vercel.app/about/stack-overflow-alternative",
+  "https://void-platform.vercel.app/about/github-alternative",
+  "https://void-platform.vercel.app/about/developer-social-network",
+  "https://void-platform.vercel.app/about/sell-software-licenses",
+  "https://void-platform.vercel.app/about/ml-ai-developer-community",
+  "https://void-platform.vercel.app/about/devops-community",
+  "https://void-platform.vercel.app/about/open-source-developer-community",
+  "https://void-platform.vercel.app/about/developer-tools-marketplace",
 ];
 
 // Ping multiple search engines to notify about new/updated content
